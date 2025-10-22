@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Remuneração – CBMGO</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <div class="brand-mark"><img src="assets/viatura-header.png" alt="Viatura do Corpo de Bombeiros" class="brand-img"></div>
+  <div class="brand-text">
+        <h1>Remuneração Militares do CBMGO</h1>
+        <p>Simulador de proventos e descontos</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card inputs-card">
+      <h2>Informações de Entrada</h2>
+      <form id="formRemuneracao">
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="mes">Mês</label>
+            <select id="mes" required>
+              <option value="" disabled selected>Selecione...</option>
+              <option>Janeiro</option><option>Fevereiro</option><option>Março</option>
+              <option>Abril</option><option>Maio</option><option>Junho</option>
+              <option>Julho</option><option>Agosto</option><option>Setembro</option>
+              <option>Outubro</option><option>Novembro</option><option>Dezembro</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="posto">Posto / Graduação</label>
+            <select id="posto" required>
+              <option value="" disabled selected>Selecione...</option>
+              <option value="CEL">CEL</option>
+              <option value="TC">TC</option>
+              <option value="MAJ">MAJ</option>
+              <option value="CAP">CAP</option>
+              <option value="1º TEN">1º TEN</option>
+              <option value="2º TEN">2º TEN</option>
+              <option value="SUBTEN / ASP OF">SUBTEN / ASP OF</option>
+              <option value="1º SGT / Cadete 3º Ano">1º SGT  / Cadete 3º Ano</option>
+              <option value="2º SGT / Cadete 2º Ano">2º SGT / Cadete 2º Ano</option>
+              <option value="3º SGT / Cadete 1º Ano">3º SGT / Cadete 1º Ano</option>
+              <option value="CB">CB</option>
+              <option value="SD 1º CLASSE">SD 1º CLASSE</option>
+              <option value="SD 2º CLASSE">SD 2º CLASSE</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="dependentes">Número de dependentes</label>
+            <select id="dependentes" required>
+              <option value="0" selected>0</option>
+              <option>1</option><option>2</option><option>3</option><option>4</option>
+              <option>5</option><option>6</option><option>7</option><option>8</option>
+              <option>9</option><option>10</option>
+            </select>
+            <small class="muted">Valor de dedução mensal por dependente será aplicado automaticamente.</small>
+          </div>
+
+          
+
+</div>
+
+
+
+
+            
+</div>
+          </div>
+
+          
+        </div>
+
+        
+<div class="section-row">
+<div class="section-box grid-span-2">
+  <div class="section-title">ASSOCIAÇÕES</div>
+    <div class="form-group">
+      <input type="text" id="associacaoValor" inputmode="decimal" placeholder="0,00" />
+      <small class="muted">Informe o valor da mensalidade da associação (se houver).</small>
+    </div>
+  </div> 
+
+  <div class="section-box grid-span-2">
+    <div class="section-title">IPASGO</div>
+    <div class="form-group">
+      <select id="ipasgo" required>
+        <option value="" disabled selected>Selecione...</option>
+        <option value="nao">Não</option>
+        <option value="sim">Sim</option>
+      </select>
+    </div>
+    <div class="form-group hidden" id="grupoIpasgoValor">
+      <div class="spacer-6"></div>
+      <div class="grid-2">
+        <label for="valorIpasgo">Valor IPASGO (R$)</label>
+        <input type="text" id="valorIpasgo" inputmode="decimal" placeholder="0,00" />
+        <small class="muted">Informe R$.</small>
+      </div>
+      <div class="spacer-6"></div>
+      <div class="grid-2">
+        <label for="ipasgoPercent">Percentual de IPASGO (%)</label>
+        <input type="text" id="ipasgoPercent" inputmode="decimal" placeholder="0,00" />
+        <small class="muted"> Informe %.</small>
+      </div>
+      <div class="spacer-6"></div>
+    </div>   
+  </div>
+
+<div class="actions">
+          <button type="submit" class="btn primary">Calcular</button>
+          <button type="button" id="limpar" class="btn">Limpar</button>
+          <button type="button" id="simularReajuste" class="btn">Simular Reajuste</button>
+          <div id="reajusteWrap" class="reajuste-wrap hidden">
+            <div class="reajuste-quick reajuste-range">
+              <input type="range" id="reajusteRange" min="0" max="100" step="0.01" value="0" /><span id="reajusteRangeVal" class="range-val">0,00%</span></div></div>
+        </div>
+      </form>
+    </section>
+
+    <section class="card results-card" id="resultado" hidden>
+      <div class="title-row"><h2>Detalhamento da Remuneração</h2><span id="autoBadge" class="badge hidden">atualizado automaticamente</span></div>
+
+      <div class="resume-grid">
+        <div class="resume-box">
+          <h3>Proventos</h3>
+          <table class="table">
+            <thead>
+              <tr><th>Descrição</th><th class="right">Valor (R$)</th></tr>
+            </thead>
+            <tbody id="tbodyProventos"></tbody>
+            <tfoot><tr class="total-bruto"><td><strong>Somatório Remuneração Bruta</strong></td>
+                <td class="right total azul" id="totalBruto">R$ 0,00</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="resume-box">
+          <h3>Descontos</h3>
+          <table class="table">
+            <thead>
+              <tr><th>Descrição</th><th class="right">Valor (R$)</th></tr>
+            </thead>
+            <tbody id="tbodyDescontos"></tbody>
+            <tfoot><tr class="total-descontos"><td><strong>Somatório Descontos</strong></td>
+                <td class="right total vermelho" id="totalDescontos">R$ 0,00</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="resume-box destaque">
+          <h3>Resumo</h3>
+          <div class="summary-line">
+            <span>Remuneração Bruta</span>
+            <span class="azul" id="resumoBruto">R$ 0,00</span>
+          </div>
+          <div class="summary-line">
+            <span>Descontos</span>
+            <span class="vermelho" id="resumoDescontos">R$ 0,00</span>
+          </div>
+          <div class="summary-line grande">
+            <span>Remuneração Líquida</span>
+            <span class="verde" id="resumoLiquido">R$ 0,00</span>
+          </div>
+
+          <div class="notes">
+            <p class="muted">
+            </p>
+            <p id="metodoIrpf" class="muted"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>© <span id="ano"></span> Todos os direitos reservados — Cadete CARVALHO, CBMGO</p>
+  </footer>
+
+  <script src="app.js"></script>
+
+  <footer class="site-footer" role="contentinfo">
+    <small>Última atualização: <strong>Outubro / 2025</strong></small>
+  </footer>
+</body>
+</html>

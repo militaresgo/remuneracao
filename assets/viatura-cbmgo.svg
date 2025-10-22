@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 720 160">
+  <defs>
+    <linearGradient id="gRed" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#dc2626"/>
+    </linearGradient>
+  </defs>
+  <rect x="120" y="60" width="440" height="56" rx="10" fill="url(#gRed)"/>
+  <rect x="560" y="60" width="80" height="56" rx="8" fill="#ef4444"/>
+  <rect x="570" y="68" width="48" height="22" rx="4" fill="#93c5fd"/>
+  <rect x="592" y="46" width="36" height="8" rx="3" fill="#60a5fa"/>
+  <rect x="568" y="46" width="20" height="8" rx="3" fill="#f87171"/>
+  <rect x="140" y="68" width="92" height="40" rx="6" fill="#b91c1c" opacity="0.9"/>
+  <rect x="242" y="68" width="92" height="40" rx="6" fill="#b91c1c" opacity="0.9"/>
+  <rect x="344" y="68" width="92" height="40" rx="6" fill="#b91c1c" opacity="0.9"/>
+  <rect x="446" y="68" width="92" height="40" rx="6" fill="#b91c1c" opacity="0.9"/>
+  <text x="174" y="96" font-family="Inter, Arial, sans-serif" font-weight="800" font-size="28" fill="#fde68a">193</text>
+  <circle cx="200" cy="126" r="18" fill="#111827"/><circle cx="200" cy="126" r="9" fill="#6b7280"/>
+  <circle cx="480" cy="126" r="18" fill="#111827"/><circle cx="480" cy="126" r="9" fill="#6b7280"/>
+  <circle cx="600" cy="126" r="18" fill="#111827"/><circle cx="600" cy="126" r="9" fill="#6b7280"/>
+</svg>
