@@ -30,7 +30,7 @@ const SUBSIDIO = {
 // ====== Constantes fixas ======
 const ABONO_FARDAMENTO = 51.99;
 const FARDAMENTO = 51.99;
-const FAS = 95.84;
+const FAS = round2(SUBSIDIO["CAP"] * 0.0035);
 const ALIQUOTA_PENSAO = 0.105;
 
 // ====== Parâmetros IRRF Mensal 2025 (oficiais RFB) ======
@@ -62,6 +62,7 @@ const PARAMS_IRRF = {
 
 // ====== Dinâmica de campos ======
 const ipasgoSel = byId("ipasgo");
+const ipasgoPercentBadge = byId("ipasgoPercentBadge");
 const grupoIpasgoValor = byId("grupoIpasgoValor");
 const valorIpasgoInput = byId("valorIpasgo");
 const ipasgoPercentInput = byId("ipasgoPercent");
@@ -72,31 +73,25 @@ let __reajustePercent = 0;
 const MAX_REAJUSTE_PERCENT = 100;
 const MIN_REAJUSTE_PERCENT = 0;
 ipasgoSel.addEventListener("change", () => {
-  const show = ipasgoSel.value === "sim";
-  grupoIpasgoValor.classList.toggle("hidden", !show);
-  if (valorIpasgoInput) valorIpasgoInput.disabled = !show;
-  if (ipasgoPercentInput) ipasgoPercentInput.disabled = !show;
-  if (!show) { valorIpasgoInput.value = ""; if (ipasgoPercentInput) ipasgoPercentInput.value=""; }
+  const show = ipasgoSel.value === "manual";
+  if (grupoIpasgoValor) grupoIpasgoValor.classList.toggle("hidden", !show);
+  if (show) { recomputePercentFromValor(); } else { if (ipasgoPercentBadge) ipasgoPercentBadge.textContent = "0,00 %"; }
+  computeDetalhamento();
 });
 
 
 
 // Recalcula o percentual a partir do valor em R$
 function recomputePercentFromValor(){
-  if (!ipasgoSel || ipasgoSel.value !== "sim") return;
-  if (!ipasgoPercentInput) return;
-  const posto = byId("posto").value;
-  if (!posto) return;
-  const subsidio = SUBSIDIO[posto] || 0;
-  const valor = parseMoney(valorIpasgoInput.value);
-  if (subsidio > 0){
-    const perc = (valor / subsidio) * 100;
-    if (isFinite(perc)){
-      ipasgoPercentInput.value = String((Math.round(perc * 100) / 100).toFixed(2)).replace(".", ",");
-    }
-  } else {
-    ipasgoPercentInput.value = "";
-  }
+  if (!ipasgoSel || ipasgoSel.value !== "manual") { if (ipasgoPercentBadge) ipasgoPercentBadge.textContent = "0,00 %"; return; }
+  const postoSel = byId("posto");
+  const posto = postoSel ? postoSel.value : "";
+  const baseSubs = SUBSIDIO[posto] || 0;
+  const valEl = byId("valorIpasgo");
+  const val = parseMoney(valEl && valEl.value ? valEl.value : "0");
+  let perc = 0;
+  if (baseSubs > 0) perc = (val / baseSubs) * 100;
+  if (ipasgoPercentBadge){ ipasgoPercentBadge.textContent = String((Math.round(perc * 100) / 100).toFixed(2)).replace(".", ",") + " %"; }
 }
 
 // Quando o usuário digitar o valor em R$, sincroniza o %
@@ -108,7 +103,7 @@ if (valorIpasgoInput){
 }
 
 // Se mudar o posto/graduação, sincroniza para ambos os sentidos
-byId("posto").addEventListener("change", () => { 
+byId("posto").addEventListener("change", () => { recomputePercentFromValor();  
   recomputeIpasgoFromPercent(); 
   recomputePercentFromValor(); 
 });
@@ -158,11 +153,13 @@ function computeDetalhamento() {
 
   // 2) Descontos fixos + pensão
   const pensao = round2(subsidio * ALIQUOTA_PENSAO);
-  const ipasgoSelecionado = ipasgoSel.value === "sim";
   let ipasgoValor = 0;
-  if (ipasgoSelecionado){
-      ipasgoValor = parseMoney(valorIpasgoInput.value);
-  }
+let ipasgoSelecionado = false;
+const ipasgoMode = ipasgoSel ? ipasgoSel.value : "nao";
+if (ipasgoMode === "basico") { ipasgoValor = round2(subsidio * 0.0681); ipasgoSelecionado = true; }
+else if (ipasgoMode === "especial") { ipasgoValor = round2(subsidio * 0.1248); ipasgoSelecionado = true; }
+else if (ipasgoMode === "manual") { ipasgoValor = round2(parseMoney(valorIpasgoInput ? valorIpasgoInput.value : "0")); ipasgoSelecionado = ipasgoValor > 0; }
+
   const associacaoValor = parseMoney(byId("associacaoValor").value);
 
   // 3) IRPF automático (IRRF mensal) — período do mês
@@ -308,32 +305,24 @@ document.getElementById("ano").textContent = new Date().getFullYear();
 
 // === Sincronização IPASGO (duas vias) ===
 function recomputeIpasgoFromPercent(){
-  if (!ipasgoSel || ipasgoSel.value !== "sim") return;
+  if (!ipasgoSel || ipasgoSel.value !== "manual") return;
   if (!ipasgoPercentInput) return;
-  const posto = byId("posto").value;
-  if (!posto) return;
+  const posto = byId("posto").value; if (!posto) return;
   const subsidio = SUBSIDIO[posto] || 0;
-  const perc = parseMoney(ipasgoPercentInput.value);
+  const perc = parseMoney(String(ipasgoPercentInput.value).replace("%",""));
   const valor = Math.round(subsidio * (perc/100) * 100) / 100;
-  if (isFinite(valor)){
-    valorIpasgoInput.value = String(valor.toFixed(2)).replace(".", ",");
-  }
+  if (isFinite(valor) && valorIpasgoInput){ valorIpasgoInput.value = String(valor.toFixed(2)).replace(".", ","); }
 }
 function recomputePercentFromValor(){
-  if (!ipasgoSel || ipasgoSel.value !== "sim") return;
-  if (!ipasgoPercentInput) return;
-  const posto = byId("posto").value;
-  if (!posto) return;
-  const subsidio = SUBSIDIO[posto] || 0;
-  const valor = parseMoney(valorIpasgoInput.value);
-  if (subsidio > 0){
-    const perc = Math.round((valor / subsidio) * 100 * 100) / 100;
-    if (isFinite(perc)){
-      ipasgoPercentInput.value = String(perc.toFixed(2)).replace(".", ",");
-    }
-  } else {
-    ipasgoPercentInput.value = "";
-  }
+  if (!ipasgoSel || ipasgoSel.value !== "manual") { if (ipasgoPercentBadge) ipasgoPercentBadge.textContent = "0,00 %"; return; }
+  const postoSel = byId("posto");
+  const posto = postoSel ? postoSel.value : "";
+  const baseSubs = SUBSIDIO[posto] || 0;
+  const valEl = byId("valorIpasgo");
+  const val = parseMoney(valEl && valEl.value ? valEl.value : "0");
+  let perc = 0;
+  if (baseSubs > 0) perc = (val / baseSubs) * 100;
+  if (ipasgoPercentBadge){ ipasgoPercentBadge.textContent = String((Math.round(perc * 100) / 100).toFixed(2)).replace(".", ",") + " %"; }
 }
 // Listeners
 if (ipasgoPercentInput){
@@ -348,7 +337,7 @@ if (ipasgoPercentInput){
 if (valorIpasgoInput){
   valorIpasgoInput.addEventListener("input", () => { recomputePercentFromValor(); computeDetalhamento(); });
 }
-byId("posto").addEventListener("change", () => { 
+byId("posto").addEventListener("change", () => { recomputePercentFromValor();  
   recomputeIpasgoFromPercent(); 
   recomputePercentFromValor(); 
 });
@@ -526,7 +515,7 @@ if (reajustePercentInput){
   });
 }
 // Ao trocar o posto, reaplica o mesmo percentual sobre o novo subsídio
-byId("posto").addEventListener("change", () => { computeDetalhamento(); });
+byId("posto").addEventListener("change", () => { recomputePercentFromValor();  computeDetalhamento(); });
 
 // ====== Auto-recalcular quando campos mudarem ======
 const camposRecalcChange = ["mes","posto","dependentes","ipasgo"];
@@ -539,3 +528,8 @@ camposRecalcInput.forEach(id => {
   const el = byId(id);
   if (el) el.addEventListener("input", () => { computeDetalhamento(); });
 });
+
+// force ipasgo default
+(function(){ const s = byId("ipasgo"); if (s) { s.value = "nao"; const ev = new Event("change"); s.dispatchEvent(ev);} })();
+
+byId("valorIpasgo").addEventListener("input", () => { recomputePercentFromValor(); computeDetalhamento(); });

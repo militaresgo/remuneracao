@@ -94,25 +94,21 @@
     <div class="section-title">IPASGO</div>
     <div class="form-group">
       <select id="ipasgo" required>
-        <option value="" disabled selected>Selecione...</option>
-        <option value="nao">Não</option>
-        <option value="sim">Sim</option>
+        <option value="nao" selected>Não</option>
+        <option value="basico">Plano Básico 6,81%</option>
+        <option value="especial">Plano Especial 12,48%</option>
+        <option value="manual">Manual</option>
       </select>
     </div>
     <div class="form-group hidden" id="grupoIpasgoValor">
-      <div class="spacer-6"></div>
-      <div class="grid-2">
-        <label for="valorIpasgo">Valor IPASGO (R$)</label>
-        <input type="text" id="valorIpasgo" inputmode="decimal" placeholder="0,00" />
-        <small class="muted">Informe R$.</small>
-      </div>
-      <div class="spacer-6"></div>
-      <div class="grid-2">
-        <label for="ipasgoPercent">Percentual de IPASGO (%)</label>
-        <input type="text" id="ipasgoPercent" inputmode="decimal" placeholder="0,00" />
-        <small class="muted"> Informe %.</small>
-      </div>
-      <div class="spacer-6"></div>
+  <div class="spacer-6"></div>
+  <label for="valorIpasgo">Valor IPASGO (R$)</label>
+  <div class="input-with-badge">
+    <input type="text" id="valorIpasgo" inputmode="decimal" placeholder="0,00" />
+    <span id="ipasgoPercentBadge" class="percent-badge">0,00&nbsp;%</span>
+  </div>
+</div>
+
     </div>   
   </div>
 

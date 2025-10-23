@@ -264,3 +264,8 @@ option:hover { background-color: #1b2433 !important; }
 .brand-mark img{width:100%;height:100%;object-fit:contain;object-position:center}
 .site-header{align-items:center}
 .brand-img{image-rendering:auto}
+.input-with-badge{display:flex;align-items:center;gap:8px}
+
+.percent-badge{white-space:nowrap;font-size:.9rem;padding:4px 8px;border-radius:999px;background:rgba(59,130,246,.12);color:#1d4ed8;border:1px solid rgba(29,78,216,.2)}
+
+#grupoIpasgoValor label{display:block;margin-bottom:6px}
