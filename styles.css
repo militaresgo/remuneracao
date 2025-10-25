@@ -264,3 +264,192 @@ option:hover { background-color: #1b2433 !important; }
 .brand-mark img{width:100%;height:100%;object-fit:contain;object-position:center}
 .site-header{align-items:center}
 .brand-img{image-rendering:auto}
+.input-with-badge{display:flex;align-items:center;gap:8px}
+
+.percent-badge{white-space:nowrap;font-size:.9rem;padding:4px 8px;border-radius:999px;background:rgba(59,130,246,.12);color:#1d4ed8;border:1px solid rgba(29,78,216,.2)}
+
+#grupoIpasgoValor label{display:block;margin-bottom:6px}
+
+
+/* === Logo size boost (mobile + desktop) === */
+.brand-mark{width:64px;height:64px}
+@media (min-width: 1024px){
+  .brand-mark{width:96px;height:96px}
+  .brand{gap:18px}
+}
+
+.cell-left{display:flex;align-items:center;gap:10px}
+.badge-teto{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35);color:#b91c1c;font-weight:600;margin-left:auto}
+
+/* Visual separator before the Férias e 13º section */
+.section-sep{height:1px;background:rgba(148,163,184,.35);margin:20px 0 20px;border-radius:999px}
+
+/* Extra spacing for the Férias e 13º box */
+#ferias13Box{margin-top:12px}
+
+
+/* ===== Férias & 13º: mobile-first cards ===== */
+.ferias13-responsive{display:flex;flex-direction:column;gap:12px}
+.f13-row{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:680px){.f13-row{grid-template-columns:1fr 1fr}}
+.f13-card{padding:12px 14px;border:1px solid rgba(148,163,184,.25);border-radius:14px;background:rgba(30,41,59,.35);backdrop-filter:blur(2px)}
+.f13-title{font-weight:700;margin-bottom:6px;font-size:1rem}
+.f13-item{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px dashed rgba(148,163,184,.25)}
+.f13-item.total{border-bottom:none;padding-top:10px}
+.f13-sub{display:block;margin:2px 0 2px 0}
+.f13-total-card{padding:12px 14px;border:1px solid rgba(148,163,184,.35);border-radius:14px;background:rgba(17,24,39,.35)}
+.f13-total-line{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0}
+.f13-total-line.highlight{border-top:1px solid rgba(148,163,184,.25);margin-top:6px;padding-top:12px}
+/* tighten typography on very narrow phones */
+@media(max-width:360px){.f13-item span,.f13-total-line span{font-size:.92rem} .f13-title{font-size:.98rem}}
+
+
+/* ===== Desktop (≥1024px): 3 columns for Férias & 13º cards ===== */
+@media(min-width:1024px){
+  .f13-row{grid-template-columns:1fr 1fr 1fr}
+}
+/* Summary card accent */
+.f13-summary .f13-title{display:flex;align-items:center;gap:6px}
+.f13-summary .f13-item.total{border-top:1px solid rgba(148,163,184,.25);margin-top:6px;padding-top:12px}
+
+
+@media(min-width:768px){.f13-row{grid-template-columns:1fr 1fr 1fr}}
+
+
+/* Equal heights for Férias & 13º cards */
+.f13-row{align-items:stretch}
+.f13-card{display:flex;flex-direction:column;height:100%}
+.f13-item.total{margin-top:auto}
+
+
+.f13-note{display:block;margin-top:2px;font-style:italic}
+
+
+/* ===== Info icon + tooltip for Férias (1/3) ===== */
+.f13-title{position:relative}
+.f13-info{
+  display:inline-flex;justify-content:center;align-items:center;
+  width:18px;height:18px;line-height:18px;border-radius:999px;
+  border:1px solid rgba(148,163,184,.45); background:transparent;
+  font-weight:700;font-size:.8rem;cursor:pointer;margin-left:6px;
+  color:#bfdbfe; /* same family as azul tone */
+}
+.f13-info:focus{outline:2px solid rgba(59,130,246,.55); outline-offset:2px}
+.f13-tooltip{
+  position:absolute; top:100%; left:0; transform:translateY(8px);
+  background:rgba(15,23,42,.95); color:#e2e8f0; padding:8px 10px; border-radius:10px;
+  border:1px solid rgba(148,163,184,.35); width:min(540px, 92%); z-index:50;
+  font-size:.92rem; line-height:1.25rem; box-shadow:0 6px 20px rgba(2,6,23,.35);
+  opacity:0; pointer-events:none; transition:opacity .15s ease, transform .15s ease;
+}
+.f13-title:hover .f13-tooltip,
+.f13-info:focus + .f13-tooltip{ opacity:1; transform:translateY(6px); pointer-events:auto }
+
+
+.f13-delta{display:block;  text-align:right; margin-top:2px;}
+
+#ferias13TotBrutoDelta{color:var(--primary); font-weight:600;}
+
+#ferias13TotDescDelta{color:var(--danger); font-weight:600;}
+
+#ferias13TotLiquidoDelta{color:var(--accent); font-weight:600;}
+
+
+/* Right-aligned deltas next to totals */
+.f13-right{display:flex;align-items:baseline;gap:8px;justify-content:flex-end;text-align:right}
+.f13-right .f13-delta{display:inline-block;margin-top:0 text-align:right; margin-top:2px;}
+
+
+.f13-summary .f13-item{padding-bottom:2px border-bottom:none !important;}
+
+
+/* Stack value + delta to the right, inside each item */
+.f13-item--stack{}
+.f13-item--stack .f13-right-col{display:flex;flex-direction:column;align-items:flex-end}
+.f13-item--stack .f13-delta{margin-top:2px;text-align:right}
+
+/* Nuke any borders/dashed in summary items */
+.f13-summary .f13-item{border:0 !important;border-bottom:0 !important;background-image:none !important;box-shadow:none !important}
+.f13-summary .f13-item.total{border-top:0 !important}
+
+
+
+/* Force remove any dashed/borders/backgrounds between summary totals and deltas */
+.f13-summary .f13-item.no-divider{
+  border:0 !important;
+  border-bottom:0 !important;
+  background:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  outline:0 !important;
+}
+/* Also ensure the right column has no border baseline artifacts */
+.f13-summary .f13-item.no-divider .f13-right-col{
+  border:0 !important; background:none !important; box-shadow:none !important;
+}
+
+
+/* Remove dashed line between Bruto and Descontos in the 13º card */
+.f13-card-decimo .f13-item:first-of-type{border-bottom:none !important}
+
+/* Ensure no dashed line between Bruto and Descontos in 13º */
+.f13-card-decimo .f13-title + .f13-item{border-bottom:none !important}
+
+
+/* Robust fix: remove any divider/trace between "Descontos" and the "Prev/IR" line in 13º card */
+.f13-card-decimo .f13-item:nth-of-type(2){
+  border:0 !important;
+  border-bottom:none !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
+/* Also ensure the "Prev/IR" line has no top border or background artifact */
+.f13-card-decimo .f13-sub{
+  border:0 !important;
+  border-top:none !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
+/* Nuclear option: disable any before/after decorative lines for these elements */
+.f13-card-decimo .f13-item:nth-of-type(2)::before,
+.f13-card-decimo .f13-item:nth-of-type(2)::after,
+.f13-card-decimo .f13-sub::before,
+.f13-card-decimo .f13-sub::after{
+  content:none !important;
+  border:0 !important;
+  background:none !important;
+  box-shadow:none !important;
+}
+
+
+
+/* Remove dashed line between Bruto and Descontos in the Férias (1/3) card */
+.f13-card-ferias .f13-title + .f13-item{border-bottom:none !important}
+/* Nuclear safeguard for that first item in the card */
+.f13-card-ferias .f13-item:first-of-type{
+  border-bottom:none !important;
+  border:0 !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
+
+
+.table-scroll{overflow-x:auto}
+
+.table-compact th,.table-compact td{padding:6px 8px}
+
+#detalhamentoAnualBox{margin-top:18px}
+
+
+/* Cores para Detalhamento Anual */
+#tabelaDetalhamentoAnual tbody tr.f13-row-proventos td:not(:first-child){ color:#1e40af; } /* azul */
+#tabelaDetalhamentoAnual tbody tr.f13-row-descontos td:not(:first-child){ color:#b91c1c; } /* vermelho */
+#tabelaDetalhamentoAnual tbody tr.f13-row-liquido td:not(:first-child){ color:#15803d; } /* verde */
+
+
+
+/* FORÇAR cores nas linhas do Detalhamento Anual */
+#tabelaDetalhamentoAnual tbody tr.f13-row-proventos td:not(:first-child){ color:#1e40af !important; } /* azul */
+#tabelaDetalhamentoAnual tbody tr.f13-row-descontos td:not(:first-child){ color:#b91c1c !important; } /* vermelho */
+#tabelaDetalhamentoAnual tbody tr.f13-row-liquido   td:not(:first-child){ color:#15803d !important; } /* verde */
+

@@ -10,7 +10,7 @@ const byId = (id) => document.getElementById(id);
 const tbodyProventos = byId("tbodyProventos");
 const tbodyDescontos = byId("tbodyDescontos");
 
-// ====== Tabela de Subsídio Efetivo por Posto/Graduação ======
+// ====== Tabela de Subsídio Efetivo por Posto/Graduação ====== SUBTEN ATUAL 14821.93
 const SUBSIDIO = {
   "CEL": 38645.68,
   "TC": 34837.44,
@@ -30,7 +30,7 @@ const SUBSIDIO = {
 // ====== Constantes fixas ======
 const ABONO_FARDAMENTO = 51.99;
 const FARDAMENTO = 51.99;
-const FAS = 95.84;
+const FAS = round2(SUBSIDIO["CAP"] * 0.0035);
 const ALIQUOTA_PENSAO = 0.105;
 
 // ====== Parâmetros IRRF Mensal 2025 (oficiais RFB) ======
@@ -62,6 +62,8 @@ const PARAMS_IRRF = {
 
 // ====== Dinâmica de campos ======
 const ipasgoSel = byId("ipasgo");
+const ipasgoManualInfo = byId("ipasgoManualInfo");
+const ipasgoPercentBadge = byId("ipasgoPercentBadge");
 const grupoIpasgoValor = byId("grupoIpasgoValor");
 const valorIpasgoInput = byId("valorIpasgo");
 const ipasgoPercentInput = byId("ipasgoPercent");
@@ -69,36 +71,35 @@ const btnReajuste = byId('simularReajuste');
 const reajusteWrap = byId('reajusteWrap');
 const reajustePercentInput = byId('reajustePercent');
 let __reajustePercent = 0;
-const MAX_REAJUSTE_PERCENT = 100;
+const MAX_REAJUSTE_PERCENT = 30;
 const MIN_REAJUSTE_PERCENT = 0;
 ipasgoSel.addEventListener("change", () => {
-  const show = ipasgoSel.value === "sim";
-  grupoIpasgoValor.classList.toggle("hidden", !show);
-  if (valorIpasgoInput) valorIpasgoInput.disabled = !show;
-  if (ipasgoPercentInput) ipasgoPercentInput.disabled = !show;
-  if (!show) { valorIpasgoInput.value = ""; if (ipasgoPercentInput) ipasgoPercentInput.value=""; }
+  const show = ipasgoSel.value === "manual";
+  if (grupoIpasgoValor) grupoIpasgoValor.classList.toggle("hidden", !show);
+  recomputePercentFromValor();
+  computeDetalhamento();
 });
 
 
 
 // Recalcula o percentual a partir do valor em R$
 function recomputePercentFromValor(){
-  if (!ipasgoSel || ipasgoSel.value !== "sim") return;
-  if (!ipasgoPercentInput) return;
-  const posto = byId("posto").value;
-  if (!posto) return;
-  const subsidio = SUBSIDIO[posto] || 0;
-  const valor = parseMoney(valorIpasgoInput.value);
-  if (subsidio > 0){
-    const perc = (valor / subsidio) * 100;
-    if (isFinite(perc)){
-      ipasgoPercentInput.value = String((Math.round(perc * 100) / 100).toFixed(2)).replace(".", ",");
-    }
-  } else {
-    ipasgoPercentInput.value = "";
+  if (!ipasgoSel || ipasgoSel.value !== "manual") {
+    if (ipasgoPercentBadge) ipasgoPercentBadge.textContent = "0,00 %";
+    if (ipasgoManualInfo) ipasgoManualInfo.textContent = "Plano de Saúde (Manual - 0,00%), sendo que esse percentual é calculado na hora a partir do valor em R$ e do subsídio do posto/graduação selecionado.";
+    return;
   }
+  const postoSel = byId("posto");
+  const posto = postoSel ? postoSel.value : "";
+  const baseSubs = SUBSIDIO[posto] || 0;
+  const valEl = byId("valorIpasgo");
+  const val = parseMoney(valEl && valEl.value ? valEl.value : "0");
+  let perc = 0;
+  if (baseSubs > 0) perc = (val / baseSubs) * 100;
+  const percTxt = String((Math.round(perc * 100) / 100).toFixed(2)).replace(".", ",") + " %";
+  if (ipasgoPercentBadge){ ipasgoPercentBadge.textContent = percTxt; }
+  if (ipasgoManualInfo){ ipasgoManualInfo.textContent = "Plano de Saúde (Manual - " + percTxt.replace(" %","%") + "), sendo que esse percentual é calculado na hora a partir do valor em R$ e do subsídio do posto/graduação selecionado."; }
 }
-
 // Quando o usuário digitar o valor em R$, sincroniza o %
 if (valorIpasgoInput){
   valorIpasgoInput.addEventListener("input", () => {
@@ -108,12 +109,7 @@ if (valorIpasgoInput){
 }
 
 // Se mudar o posto/graduação, sincroniza para ambos os sentidos
-byId("posto").addEventListener("change", () => { 
-  recomputeIpasgoFromPercent(); 
-  recomputePercentFromValor(); 
-});
-
-
+byId("posto").addEventListener("change", () => { recomputePercentFromValor(); if (typeof recomputeIpasgoFromPercent === "function") recomputeIpasgoFromPercent(); computeDetalhamento(); });
 // Máscara simples para inputs monetários
 ["valorIpasgo", "associacaoValor"].forEach(id => {
   const el = byId(id);
@@ -158,11 +154,16 @@ function computeDetalhamento() {
 
   // 2) Descontos fixos + pensão
   const pensao = round2(subsidio * ALIQUOTA_PENSAO);
-  const ipasgoSelecionado = ipasgoSel.value === "sim";
   let ipasgoValor = 0;
-  if (ipasgoSelecionado){
-      ipasgoValor = parseMoney(valorIpasgoInput.value);
-  }
+let ipasgoSelecionado = false;
+  let ipasgoTetoApplied = false;
+const ipasgoMode = ipasgoSel ? ipasgoSel.value : "nao";
+if (ipasgoMode === "basico") { ipasgoValor = round2(subsidio * 0.0681);
+  if (ipasgoValor >= 785.46) { ipasgoValor = 785.46; } ipasgoSelecionado = true; }
+else if (ipasgoMode === "especial") { ipasgoValor = round2(subsidio * 0.1248);
+  if (ipasgoValor >= 1025.40) { ipasgoValor = 1025.40; } ipasgoSelecionado = true; }
+else if (ipasgoMode === "manual") { ipasgoValor = round2(parseMoney(valorIpasgoInput ? valorIpasgoInput.value : "0")); ipasgoSelecionado = ipasgoValor > 0; }
+
   const associacaoValor = parseMoney(byId("associacaoValor").value);
 
   // 3) IRPF automático (IRRF mensal) — período do mês
@@ -199,7 +200,18 @@ function computeDetalhamento() {
     { desc: "Contribuição Pensão e Inatividade (10,5%)", valor: pensao },
     { desc: `IRPF`, valor: irpf }
   ];
-  if (ipasgoSelecionado) descontos.push({ desc: "IPASGO", valor: ipasgoValor });
+if (ipasgoSelecionado) {
+  let modeLabel = "";
+  if (ipasgoMode === "basico") modeLabel = "Plano Padrão 6,81%";
+  else if (ipasgoMode === "especial") modeLabel = "Plano Especial 12,48%";
+  if (ipasgoMode === "manual") {
+    const perc = (subsidio > 0) ? (Math.round((ipasgoValor / subsidio) * 10000) / 100) : 0;
+    const percTxt = String(perc.toFixed(2)).replace(".", ",") + "%";
+    const label = "Plano de Saúde (Manual – " + percTxt + ")";
+    descontos.push({ desc: label, valor: ipasgoValor });
+  } else { const label = "IPASGO (" + modeLabel + ")"; const _item = { desc: label, valor: ipasgoValor }; if (ipasgoTetoApplied) _item.badge = "teto"; descontos.push(_item); }
+}
+
   if (associacaoValor > 0) descontos.push({ desc: "Filiação a Associação", valor: associacaoValor });
 
   const totalDescontos = sum(descontos.map(d => d.valor));
@@ -259,8 +271,359 @@ function computeDetalhamento() {
   resumoBrutoEl.innerHTML = showDelta ? (fmt(totalBruto) + ` <small>(+${fmt(deltaBruto)} | ${fmtPerc(deltaPercBruto)})</small>`) : fmt(totalBruto);
   resumoDescontosEl.innerHTML = showDelta ? (fmt(totalDescontos) + ` <small>(+${fmt(deltaDesc)} | ${fmtPerc(deltaPercDesc)})</small>`) : fmt(totalDescontos);
   resumoLiquidoEl.innerHTML = showDelta ? (fmt(liquido) + ` <small>(+${fmt(deltaLiq)} | ${fmtPerc(deltaPercLiq)})</small>`) : fmt(liquido);
-  metodoIrpfEl.textContent = ``;
+  metodoIrpfEl.textContent = ``;  // ===== Férias (1/3) e 13º =====
+  try {
+    const noPrevTerco = true; // toggle removed
 
+    // Terço de férias sobre o subsídio atual
+    const terco = round2(subsidio / 3);
+    const prevFerias = 0;
+
+    // IR sobre férias (incremental no mês do pagamento)
+    // Reaproveita P (tabela mensal) e variáveis já calculadas: pensao, irpf, dependentes, subsidio
+    const dedDependentes2 = round2(P.dependente * dependentes);
+    const deducoesLegais2 = round2((pensao + prevFerias) + dedDependentes2);
+    const simplificado2 = Math.min((subsidio + terco) * 0.25, P.desconto_simplificado_limite);
+    const descontoAplicado2 = Math.max(deducoesLegais2, simplificado2);
+
+    let baseCalc2 = (subsidio + terco) - descontoAplicado2;
+    if (baseCalc2 < 0) baseCalc2 = 0;
+
+    let aliquota2 = 0, deducao2 = 0;
+    for (const faixa of P.faixas) {
+      if (baseCalc2 <= faixa.ate) { aliquota2 = faixa.aliquota; deducao2 = faixa.deducao; break; }
+    }
+    let irpf2 = baseCalc2 * aliquota2 - deducao2;
+    if (irpf2 < 0) irpf2 = 0;
+    irpf2 = round2(irpf2);
+
+    const irFerias = round2(Math.max(0, irpf2 - irpf));
+    const descFerias = round2(prevFerias + irFerias);
+    const liquidoFerias = round2(terco - descFerias);
+
+    // 13º (exclusivo na fonte) — base simplificada: subsídio atual
+    const bruto13 = subsidio;
+    const prev13 = round2(bruto13 * ALIQUOTA_PENSAO);
+    const dedDependentes13 = round2(PARAMS_IRRF["jan_abr"].dependente * dependentes);
+const base13 = bruto13 - prev13 - dedDependentes13;
+    const P13 = PARAMS_IRRF["jan_abr"]; // usa faixas de mai_dez por ser apurado em dezembro
+    let aliquota13 = 0, deducao13 = 0;
+    for (const faixa of P13.faixas) {
+      if (base13 <= faixa.ate) { aliquota13 = faixa.aliquota; deducao13 = faixa.deducao; break; }
+    }
+    if (base13 < 0) base13 = 0;
+    let ir13 = base13 * aliquota13 - deducao13;
+    if (ir13 < 0) ir13 = 0;
+    ir13 = round2(ir13);
+
+    const desc13 = round2(prev13 + ir13);
+    const liquido13 = round2(bruto13 - desc13);
+
+    // Totais
+    const totalBrutoFerias13 = round2(terco + bruto13);
+    const totalDescFerias13 = round2(descFerias + desc13);
+    const totalLiqFerias13 = round2(liquidoFerias + liquido13);
+
+    // Atualiza DOM (se existir a seção)
+    const elCheck = byId("noPrevTerco");
+    if (byId("feriasBruto")) {
+      byId("feriasBruto").textContent = fmt(terco);
+      byId("feriasDesc").textContent = fmt(descFerias);
+      byId("feriasDescBreak").textContent = `Prev: ${fmt(prevFerias)} | IR: ${fmt(irFerias)}`;
+      byId("feriasLiquido").textContent = fmt(liquidoFerias);
+
+      byId("decimoBruto").textContent = fmt(bruto13);
+      byId("decimoDesc").textContent = fmt(desc13);
+      byId("decimoDescBreak").textContent = `Prev: ${fmt(prev13)} | IR: ${fmt(ir13)}`;
+      byId("decimoLiquido").textContent = fmt(liquido13);
+
+      byId("ferias13TotBruto").textContent = fmt(totalBrutoFerias13);
+      byId("ferias13TotDesc").textContent = fmt(totalDescFerias13);
+      byId("ferias13TotLiquido").textContent = fmt(totalLiqFerias13);
+    
+    // ===== Deltas do Resumo Adicional Férias e 13º (comparado à base sem reajuste) =====
+    (function(){
+      try {
+        const showDelta = (__reajustePercent||0) > 0;
+        if (!showDelta) {
+          if (byId("ferias13TotBruto")) byId("ferias13TotBruto").innerHTML = fmt(totalBrutoFerias13);
+          if (byId("ferias13TotDesc")) byId("ferias13TotDesc").innerHTML = fmt(totalDescFerias13);
+          if (byId("ferias13TotLiquido")) byId("ferias13TotLiquido").innerHTML = fmt(totalLiqFerias13);
+          if (byId("ferias13TotBrutoDelta")) byId("ferias13TotBrutoDelta").textContent = "";
+          if (byId("ferias13TotDescDelta")) byId("ferias13TotDescDelta").textContent = "";
+          if (byId("ferias13TotLiquidoDelta")) byId("ferias13TotLiquidoDelta").textContent = "";
+          return;
+        }
+        // Base SEM reajuste
+        const tercoBase = round2(baseSubs / 3);
+        const prevFeriasBase = 0; // sem previdência sobre o terço no simulador
+        // IR férias (base) incremental
+        const dedDependentesBase2 = round2(P.dependente * dependentes);
+        const deducoesLegaisBase2 = round2((pensao + prevFeriasBase) + dedDependentesBase2);
+        const simplificadoBase2 = Math.min((baseSubs + tercoBase) * 0.25, P.desconto_simplificado_limite);
+        const descontoAplicadoBase2 = Math.max(deducoesLegaisBase2, simplificadoBase2);
+        let baseCalcBase2 = (baseSubs + tercoBase) - descontoAplicadoBase2;
+        if (baseCalcBase2 < 0) baseCalcBase2 = 0;
+        let aliquotaBase2 = 0, deducaoBase2 = 0;
+        for (const faixa of P.faixas) {
+          if (baseCalcBase2 <= faixa.ate) { aliquotaBase2 = faixa.aliquota; deducaoBase2 = faixa.deducao; break; }
+        }
+        let irpfBase2 = baseCalcBase2 * aliquotaBase2 - deducaoBase2;
+        if (irpfBase2 < 0) irpfBase2 = 0;
+        irpfBase2 = round2(irpfBase2);
+        // Recalcula IR mensal sem terço para achar somente o incremento do terço (base)
+        let baseCalcSemTercoBase = baseSubs - (Math.max(baseSubs * 0.25, P.desconto_simplificado_limite, pensao + round2(P.dependente * dependentes)));
+        if (baseCalcSemTercoBase < 0) baseCalcSemTercoBase = 0;
+        let aliquotaSemTercoBase = 0, deducaoSemTercoBase = 0;
+        for (const faixa of P.faixas) {
+          if (baseCalcSemTercoBase <= faixa.ate) { aliquotaSemTercoBase = faixa.aliquota; deducaoSemTercoBase = faixa.deducao; break; }
+        }
+        let irpfSemTercoBase = baseCalcSemTercoBase * aliquotaSemTercoBase - deducaoSemTercoBase;
+        if (irpfSemTercoBase < 0) irpfSemTercoBase = 0;
+        irpfSemTercoBase = round2(irpfSemTercoBase);
+        const irFeriasBase = round2(Math.max(0, irpfBase2 - irpfSemTercoBase));
+        const descFeriasBase = round2(prevFeriasBase + irFeriasBase);
+        const liquidoFeriasBase = round2(tercoBase - descFeriasBase);
+
+        // 13º base (Janeiro + dependentes)
+        const bruto13Base = baseSubs;
+        const prev13Base = round2(bruto13Base * ALIQUOTA_PENSAO);
+        const P13b = PARAMS_IRRF["jan_abr"];
+        const dedDependentes13b = round2(P13b.dependente * dependentes);
+        let base13b = bruto13Base - prev13Base - dedDependentes13b;
+        if (base13b < 0) base13b = 0;
+        let aliquota13b = 0, deducao13b = 0;
+        for (const faixa of P13b.faixas) {
+          if (base13b <= faixa.ate) { aliquota13b = faixa.aliquota; deducao13b = faixa.deducao; break; }
+        }
+        let ir13b = base13b * aliquota13b - deducao13b;
+        if (ir13b < 0) ir13b = 0;
+        ir13b = round2(ir13b);
+        const desc13b = round2(prev13Base + ir13b);
+        const liq13b = round2(bruto13Base - desc13b);
+
+        const totalBrutoBaseF13 = round2(tercoBase + bruto13Base);
+        const totalDescBaseF13 = round2(descFeriasBase + desc13b);
+        const totalLiqBaseF13  = round2(liquidoFeriasBase + liq13b);
+
+        // Deltas
+        const dBruto = round2(totalBrutoFerias13 - totalBrutoBaseF13);
+        const dDesc  = round2(totalDescFerias13  - totalDescBaseF13);
+        const dLiq   = round2(totalLiqFerias13   - totalLiqBaseF13);
+
+        const pBruto = totalBrutoBaseF13 ? round2(dBruto / totalBrutoBaseF13 * 100) : 0;
+        const pDesc  = totalDescBaseF13  ? round2(dDesc  / totalDescBaseF13  * 100) : 0;
+        const pLiq   = totalLiqBaseF13   ? round2(dLiq   / totalLiqBaseF13   * 100) : 0;
+
+        // Render com sufixo " (+R$ X | +Y%)"
+        const sufBruto = ` <small class="muted">(+${fmt(Math.abs(dBruto))} | ${fmtPerc(Math.abs(pBruto))})</small>`;
+        const sufDesc  = ` <small class="muted">(+${fmt(Math.abs(dDesc))} | ${fmtPerc(Math.abs(pDesc))})</small>`;
+        const sufLiq   = ` <small class="muted">(+${fmt(Math.abs(dLiq))} | ${fmtPerc(Math.abs(pLiq))})</small>`;
+
+        if (byId("ferias13TotBruto")) byId("ferias13TotBruto").innerHTML = fmt(totalBrutoFerias13);
+        if (byId("ferias13TotBrutoDelta")) byId("ferias13TotBrutoDelta").textContent = `(+${fmt(Math.abs(dBruto))} | ${fmtPerc(Math.abs(pBruto))})`;
+        if (byId("ferias13TotDesc")) byId("ferias13TotDesc").innerHTML = fmt(totalDescFerias13);
+        if (byId("ferias13TotDescDelta")) byId("ferias13TotDescDelta").textContent = `(+${fmt(Math.abs(dDesc))} | ${fmtPerc(Math.abs(pDesc))})`;
+        if (byId("ferias13TotLiquido")) byId("ferias13TotLiquido").innerHTML = fmt(totalLiqFerias13);
+        if (byId("ferias13TotLiquidoDelta")) byId("ferias13TotLiquidoDelta").textContent = `(+${fmt(Math.abs(dLiq))} | ${fmtPerc(Math.abs(pLiq))})`;
+      } catch(e){ /* silencioso */ }
+    })();
+}
+  } catch (e) {
+    // ignora se a seção ainda não existe
+  }
+
+  
+  
+  
+// === Publish Férias (1/3) & 13º to global state for Detalhamento Anual ===
+  try {
+    window.__F13__ = {
+      ferias:  { bruto: terco,   descontos: descFerias,  liquido: liquidoFerias },
+      decimo:  { bruto: bruto13, descontos: desc13,      liquido: liquido13 }
+    };
+  } catch(_e) { /* no-op */ }
+// ===== Detalhamento Anual =====
+  try {
+    const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+    const thead = byId("theadDetalhamentoAnual");
+    const tbody = byId("tbodyDetalhamentoAnual");
+    if (!thead || !tbody) { /* sem seção */ } else {
+      
+      // Helper para ler valores monetários do DOM com robustez
+      const getNumByIdAnual = (id) => {
+        const el = byId(id);
+        if (!el) return null;
+        const txt = (el.textContent || el.innerText || "").replace(/\u00A0/g,' ').trim();
+        if (!txt) return null;
+        if (typeof parseMoney === "function") {
+          const v = parseMoney(txt);
+          if (Number.isFinite(v)) return v;
+        }
+        const norm = txt.replace(/[^\d,-]/g,"").replace(/\./g,"").replace(",",".");
+        const n = Number(norm);
+        return Number.isFinite(n) ? n : null;
+      };
+// Snapshot seguro dos insumos
+      const _subsidio = (typeof subsidio !== "undefined" && isFinite(subsidio)) ? subsidio : 0;
+      const _ABONO_FARDAMENTO = (typeof ABONO_FARDAMENTO !== "undefined") ? ABONO_FARDAMENTO : 0;
+      const _FARDAMENTO = (typeof FARDAMENTO !== "undefined") ? FARDAMENTO : 0;
+      const _FAS = (typeof FAS !== "undefined") ? FAS : 0;
+      const _ALIQUOTA_PENSAO = (typeof ALIQUOTA_PENSAO !== "undefined") ? ALIQUOTA_PENSAO : 0.105;
+      const _dependentes = (typeof dependentes !== "undefined" && isFinite(dependentes)) ? dependentes : (parseInt(byId("dependentes")?.value||"0",10)||0);
+      const _ipasgoValor = (typeof ipasgoValor !== "undefined" && isFinite(ipasgoValor)) ? ipasgoValor : (typeof parseMoney === "function" ? parseMoney(byId("valorIpasgo")?.value || "0") : 0);
+      const _associacaoValor = (typeof associacaoValor !== "undefined" && isFinite(associacaoValor)) ? associacaoValor : (typeof parseMoney === "function" ? parseMoney(byId("associacaoValor")?.value || "0") : 0);
+
+      // Helpers
+      const headCols = meses;
+      const renderHead = () => { thead.innerHTML = '<tr><th></th>' + headCols.map(c=>`<th>${c}</th>`).join('') + '</tr>'; };
+
+      const computeMensal = (mi) => {
+        const PM = PARAMS_IRRF[ mi <= 3 ? "jan_abr" : "mai_dez" ];
+        const bruto = round2(_subsidio + _ABONO_FARDAMENTO);
+        const pensaoM = round2(_subsidio * _ALIQUOTA_PENSAO);
+        const dedDepM = round2(PM.dependente * _dependentes);
+        const simplifM = Math.min(_subsidio * 0.25, PM.desconto_simplificado_limite);
+        const dedLegaisM = round2(pensaoM + dedDepM);
+        let baseCalcM = _subsidio - Math.max(dedLegaisM, simplifM);
+        if (baseCalcM < 0) baseCalcM = 0;
+        let aM = 0, dM = 0;
+        for (const faixa of PM.faixas) { if (baseCalcM <= faixa.ate) { aM = faixa.aliquota; dM = faixa.deducao; break; } }
+        let irpfM = round2(baseCalcM * aM - dM); if (irpfM < 0) irpfM = 0;
+
+        const descontos = round2(_FARDAMENTO + _FAS + pensaoM + irpfM + (_ipasgoValor||0) + (_associacaoValor||0));
+        const liquido = round2(bruto - descontos);
+        return { bruto, descontos, liquido };
+      };
+
+      const provs = [], descs = [], liqs = [];
+      for (let i=0;i<12;i++){ const r = computeMensal(i); provs.push(r.bruto); descs.push(r.descontos); liqs.push(r.liquido); }
+
+      // Colunas finais (copiadas do card Férias e 13º já computado acima)
+      const _terco = (typeof terco !== "undefined") ? terco : 0;
+      const _descFerias = (typeof descFerias !== "undefined") ? descFerias : 0;
+      const _liqFerias = (typeof liquidoFerias !== "undefined") ? liquidoFerias : Math.max(0, _terco - _descFerias);
+      const _bruto13 = (typeof bruto13 !== "undefined") ? bruto13 : _subsidio;
+      const _desc13 = (typeof desc13 !== "undefined") ? desc13 : 0;
+      const _liq13 = (typeof liquido13 !== "undefined") ? liquido13 : Math.max(0, _bruto13 - _desc13);
+
+      
+      // Colunas finais: ler diretamente do DOM da seção "Férias e 13º" (garante sincronismo)
+      
+
+      const tercoAnual = getNumByIdAnual("feriasBruto");
+      const descFeriasAnual = getNumByIdAnual("feriasDesc");
+      const liqFeriasAnual = getNumByIdAnual("feriasLiquido");
+
+      const bruto13Anual = getNumByIdAnual("decimoBruto");
+      const desc13Anual = getNumByIdAnual("decimoDesc");
+      const liq13Anual = getNumByIdAnual("decimoLiquido");
+
+      
+      // Colunas finais: ler DOM (se já renderizado) com fallback para variáveis computadas
+      
+
+      let feriasBrutoVal = getNumByIdAnual("feriasBruto");
+      let feriasDescVal  = getNumByIdAnual("feriasDesc");
+      let feriasLiqVal   = getNumByIdAnual("feriasLiquido");
+      if ((!feriasBrutoVal || feriasBrutoVal === 0) && typeof terco !== "undefined") feriasBrutoVal = terco;
+      if ((!feriasDescVal  || feriasDescVal  === 0) && typeof descFerias !== "undefined") feriasDescVal = descFerias;
+      if ((!feriasLiqVal   || feriasLiqVal   === 0) && typeof liquidoFerias !== "undefined") feriasLiqVal = liquidoFerias;
+
+      let decimoBrutoVal = getNumByIdAnual("decimoBruto");
+      let decimoDescVal  = getNumByIdAnual("decimoDesc");
+      let decimoLiqVal   = getNumByIdAnual("decimoLiquido");
+      if ((!decimoBrutoVal || decimoBrutoVal === 0) && typeof bruto13 !== "undefined") decimoBrutoVal = bruto13;
+      if ((!decimoDescVal  || decimoDescVal  === 0) && typeof desc13  !== "undefined") decimoDescVal  = desc13;
+      if ((!decimoLiqVal   || decimoLiqVal   === 0) && typeof liquido13 !== "undefined") decimoLiqVal = liquido13;
+
+      provs.push(feriasBrutoVal, decimoBrutoVal);
+      descs.push(feriasDescVal,  decimoDescVal);
+      liqs.push(feriasLiqVal,    decimoLiqVal);
+
+      
+      
+      renderHead();
+      const row = (label, arr) => {
+        const cls = label === 'Proventos' ? 'f13-row-proventos' : (label === 'Descontos' ? 'f13-row-descontos' : 'f13-row-liquido');
+        return '<tr class="'+cls+'"><td><strong>'+label+'</strong></td>' + arr.map(v=>`<td class="right">${fmt(v)}</td>`).join('') + '</tr>';
+      };
+      
+      const f13 = (window && window.__F13__) ? window.__F13__ : { ferias:{bruto:0,descontos:0,liquido:0}, decimo:{bruto:0,descontos:0,liquido:0} };
+      const provsAll = provs.concat([f13.ferias.bruto, f13.decimo.bruto]);
+      const descsAll = descs.concat([f13.ferias.descontos, f13.decimo.descontos]);
+      const liqsAll  = liqs .concat([f13.ferias.liquido, f13.decimo.liquido]);
+      tbody.innerHTML = row("Proventos", provsAll) + row("Descontos", descsAll) + row("Remuneração Líquida", liqsAll);
+;
+
+}
+} catch(e){ /* silencioso */ }
+  // ===== Detalhamento Anual (12 meses: Jan–Dez) =====
+  try {
+    const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+    const thead = byId("theadDetalhamentoAnual");
+    const tbody = byId("tbodyDetalhamentoAnual");
+    if (thead && tbody){
+      const PM_JA = PARAMS_IRRF["jan_abr"];
+      const PM_MD = PARAMS_IRRF["mai_dez"];
+      const _subsidio = (typeof subsidio !== "undefined" && isFinite(subsidio)) ? subsidio : 0;
+      const _AF = (typeof ABONO_FARDAMENTO !== "undefined") ? ABONO_FARDAMENTO : 0;
+      const _FARD = (typeof FARDAMENTO !== "undefined") ? FARDAMENTO : 0;
+      const _FAS = (typeof FAS !== "undefined") ? FAS : 0;
+      const _ALI = (typeof ALIQUOTA_PENSAO !== "undefined") ? ALIQUOTA_PENSAO : 0.105;
+      const _dep = (typeof dependentes !== "undefined" && isFinite(dependentes)) ? dependentes : (parseInt(byId("dependentes")?.value||"0",10)||0);
+      const _ipas = (typeof ipasgoValor !== "undefined" && isFinite(ipasgoValor)) ? ipasgoValor : (typeof parseMoney==="function" ? parseMoney(byId("valorIpasgo")?.value||"0") : 0);
+      const _assoc = (typeof associacaoValor !== "undefined" && isFinite(associacaoValor)) ? associacaoValor : (typeof parseMoney==="function" ? parseMoney(byId("associacaoValor")?.value||"0") : 0);
+      function calcMensal(mi){
+        const PM = mi<=3 ? PM_JA : PM_MD;
+        const bruto = round2(_subsidio + _AF);
+        const pens = round2(_subsidio * _ALI);
+        const dedDep = round2(PM.dependente * _dep);
+        const simpl = Math.min(_subsidio * 0.25, PM.desconto_simplificado_limite);
+        const dedLeg = round2(pens + dedDep);
+        let base = _subsidio - Math.max(dedLeg, simpl);
+        if (base < 0) base = 0;
+        let a=0,d=0;
+        for (const fx of PM.faixas){ if (base <= fx.ate){ a=fx.aliquota; d=fx.deducao; break; } }
+        let ir = base*a - d; if (ir < 0) ir = 0; ir = round2(ir);
+        const descontos = round2(_FARD + _FAS + pens + ir + (_ipas||0) + (_assoc||0));
+        const liquido = round2(bruto - descontos);
+        return {bruto, descontos, liquido};
+      }
+      const provs=[], descs=[], liqs=[];
+      for (let i=0;i<12;i++){ const r = calcMensal(i); provs.push(r.bruto); descs.push(r.descontos); liqs.push(r.liquido); }
+      thead.innerHTML = '<tr><th></th>' + meses.map(m=>`<th>${m}</th>`).join('') + `<th>Adicional Férias (1/3)</th><th>13º (gratificação natalina)</th></tr>`;
+      const row = (label, arr) => '<tr><td><strong>'+label+'</strong></td>' + arr.map(v=>`<td class="right">${fmt(v)}</td>`).join('') + '</tr>';
+      
+      // Acrescentar as colunas finais com valores da seção "Férias e 13º"
+      const getNumByIdAnual2 = (id) => {
+        const el = byId(id);
+        if (!el) return null;
+        const txt = (el.textContent || el.innerText || "").trim();
+        if (!txt) return null;
+        if (typeof parseMoney === "function") return parseMoney(txt);
+        return Number(txt.replace(/[^\d,-]/g,"").replace(/\./g,"").replace(",",".") || 0);
+      };
+      let feriasB = getNumByIdAnual2("feriasBruto");
+      let feriasD = getNumByIdAnual2("feriasDesc");
+      let feriasL = getNumByIdAnual2("feriasLiquido");
+      if (feriasB == null && typeof terco !== "undefined") feriasB = terco;
+      if (feriasD == null && typeof descFerias !== "undefined") feriasD = descFerias;
+      if (feriasL == null && typeof liquidoFerias !== "undefined") feriasL = liquidoFerias;
+      let decimoB = getNumByIdAnual2("decimoBruto");
+      let decimoD = getNumByIdAnual2("decimoDesc");
+      let decimoL = getNumByIdAnual2("decimoLiquido");
+      if (decimoB == null && typeof bruto13 !== "undefined") decimoB = bruto13;
+      if (decimoD == null && typeof desc13  !== "undefined") decimoD = desc13;
+      if (decimoL == null && typeof liquido13 !== "undefined") decimoL = liquido13;
+      feriasB = +((feriasB ?? 0)); feriasD = +((feriasD ?? 0)); feriasL = +((feriasL ?? (feriasB - feriasD)));
+      decimoB = +((decimoB ?? 0)); decimoD = +((decimoD ?? 0)); decimoL = +((decimoL ?? (decimoB - decimoD)));
+      const provsAll = provs.concat([feriasB, decimoB]);
+      const descsAll = descs.concat([feriasD, decimoD]);
+      const liqsAll  = liqs.concat([feriasL, decimoL]);
+      tbody.innerHTML = row("Proventos", provsAll) + row("Descontos", descsAll) + row("Remuneração Líquida", liqsAll);
+    }
+  } catch(e){ /* silencioso */ }
   resultado.hidden = false;
   const badge = byId('autoBadge');
 if (badge){
@@ -269,6 +632,103 @@ if (badge){
     clearTimeout(window.__autoBadgeTimer);
     window.__autoBadgeTimer = setTimeout(()=>{ badge.classList.remove('show'); }, 1200);
   }
+
+  // ---- END-SYNC: atualiza as duas colunas extras do Detalhamento Anual com TEXTO dos cards ----
+  try {
+    const thead = byId("theadDetalhamentoAnual");
+    const tbody = byId("tbodyDetalhamentoAnual");
+    if (thead && tbody) {
+      const ensureHeadExtras = () => {
+        const tr = thead.querySelector("tr");
+        if (!tr) return;
+        const cols = tr.children.length;
+        if (cols < 15) {
+          tr.insertAdjacentHTML("beforeend",
+            '<th>Adicional Férias (1/3)</th><th>13º (gratificação natalina)</th>');
+        }
+      };
+      const getTxt = (id) => {
+        const el = byId(id);
+        if (!el) return null;
+        const t = (el.textContent || el.innerText || "").replace(/\u00A0/g," ").trim();
+        return t || null;
+      };
+      const setLastTwo = (row, t1, t2) => {
+        if (!row) return;
+        const headCols = thead.querySelector("tr")?.children?.length || 15;
+        while (row.cells.length < headCols) {
+          const td = document.createElement("td");
+          td.className = "right";
+          row.appendChild(td);
+        }
+        const c1 = row.cells[row.cells.length - 2];
+        const c2 = row.cells[row.cells.length - 1];
+        c1.textContent = t1 ?? "—";
+        c2.textContent = t2 ?? "—";
+        c1.classList.add("right");
+        c2.classList.add("right");
+      };
+      const syncOnce = () => {
+        const rows = tbody.querySelectorAll("tr");
+        if (rows.length < 3) return false;
+        const fB = getTxt("feriasBruto");
+        const fD = getTxt("feriasDesc");
+        const fL = getTxt("feriasLiquido");
+        const dB = getTxt("decimoBruto");
+        const dD = getTxt("decimoDesc");
+        const dL = getTxt("decimoLiquido");
+        if ([fB,fD,fL,dB,dD,dL].some(v => v == null)) return false;
+        ensureHeadExtras();
+        setLastTwo(rows[0], fB, dB); // Proventos
+        setLastTwo(rows[1], fD, dD); // Descontos
+        setLastTwo(rows[2], fL, dL);
+        // Força cores por classe e inline (backup)
+        try {
+          rows[0].classList.add("f13-row-proventos");
+          rows[1].classList.add("f13-row-descontos");
+          rows[2].classList.add("f13-row-liquido");
+          const col0 = "#1e40af", col1 = "#b91c1c", col2 = "#15803d";
+          [...rows[0].cells].forEach((td,i)=>{ if(i>0) td.style.color = col0; });
+          [...rows[1].cells].forEach((td,i)=>{ if(i>0) td.style.color = col1; });
+          [...rows[2].cells].forEach((td,i)=>{ if(i>0) td.style.color = col2; });
+        } catch(_e) { /* silencioso */ }
+     // Líquido
+        // Atualiza os totais novamente (garantia)
+      try {
+        const rows = byId("tbodyDetalhamentoAnual")?.querySelectorAll("tr") || [];
+        if (rows.length>=3){
+          ensureHeadExtras();
+          // reusa setTotalMonthsOnly se presente
+          if (typeof setTotalMonthsOnly === "function") {
+            setTotalMonthsOnly(rows[0]);
+            setTotalMonthsOnly(rows[1]);
+            setTotalMonthsOnly(rows[2]);
+          }
+        }
+      } catch(_e) {}
+return true;
+      };
+      // tentar já, depois no próximo frame e com pequenos atrasos
+      if (!syncOnce()) {
+        if (typeof requestAnimationFrame === "function") {
+          requestAnimationFrame(() => { syncOnce() || setTimeout(syncOnce, 50); });
+        } else {
+          setTimeout(syncOnce, 50);
+        }
+        // Observa alterações nos cards e na própria tabela para re-sincronizar
+        try {
+          const targets = [byId("ferias13Box"), byId("tabelaDetalhamentoAnual")].filter(Boolean);
+          if (targets.length && typeof MutationObserver !== "undefined") {
+            const obs = new MutationObserver(() => { syncOnce(); });
+            targets.forEach(t => obs.observe(t, { childList:true, subtree:true, characterData:true }));
+            const stopIfDone = () => { if (syncOnce()) obs.disconnect(); };
+            setTimeout(stopIfDone, 200);
+            setTimeout(stopIfDone, 600);
+          }
+        } catch(_e) { /* silencioso */ }
+      }
+    }
+  } catch(_e) { /* silencioso */ }
 }
 
 // Botão limpar
@@ -293,11 +753,15 @@ function round2(n){ return Math.round(n * 100) / 100; }
 function renderRows(tbody, items, colorClass){
   tbody.innerHTML = items.map(it => `
     <tr>
-      <td>${escapeHtml(it.desc)}</td>
+      <td class="cell-left">
+        <span>${escapeHtml(it.desc)}</span>
+        ${it.badge ? `<span class="badge badge-teto">${escapeHtml(it.badge)}</span>` : ``}
+      </td>
       <td class="right ${colorClass}"><strong>${fmt(it.valor)}</strong></td>
     </tr>
   `).join("");
 }
+
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
@@ -308,32 +772,28 @@ document.getElementById("ano").textContent = new Date().getFullYear();
 
 // === Sincronização IPASGO (duas vias) ===
 function recomputeIpasgoFromPercent(){
-  if (!ipasgoSel || ipasgoSel.value !== "sim") return;
+  if (!ipasgoSel || ipasgoSel.value !== "manual") return;
   if (!ipasgoPercentInput) return;
-  const posto = byId("posto").value;
-  if (!posto) return;
+  const posto = byId("posto").value; if (!posto) return;
   const subsidio = SUBSIDIO[posto] || 0;
-  const perc = parseMoney(ipasgoPercentInput.value);
+  const perc = parseMoney(String(ipasgoPercentInput.value).replace("%",""));
   const valor = Math.round(subsidio * (perc/100) * 100) / 100;
-  if (isFinite(valor)){
-    valorIpasgoInput.value = String(valor.toFixed(2)).replace(".", ",");
-  }
+  if (isFinite(valor) && valorIpasgoInput){ valorIpasgoInput.value = String(valor.toFixed(2)).replace(".", ","); }
 }
 function recomputePercentFromValor(){
-  if (!ipasgoSel || ipasgoSel.value !== "sim") return;
-  if (!ipasgoPercentInput) return;
-  const posto = byId("posto").value;
-  if (!posto) return;
-  const subsidio = SUBSIDIO[posto] || 0;
-  const valor = parseMoney(valorIpasgoInput.value);
-  if (subsidio > 0){
-    const perc = Math.round((valor / subsidio) * 100 * 100) / 100;
-    if (isFinite(perc)){
-      ipasgoPercentInput.value = String(perc.toFixed(2)).replace(".", ",");
-    }
-  } else {
-    ipasgoPercentInput.value = "";
+  if (!ipasgoSel || ipasgoSel.value !== "manual") {
+    if (ipasgoPercentBadge) ipasgoPercentBadge.textContent = "0,00 %";
+    if (ipasgoManualInfo) ipasgoManualInfo.textContent = "Plano de Saúde (Manual - 0,00%), sendo que esse percentual é calculado na hora a partir do valor em R$ e do subsídio do posto/graduação selecionado.";
+    return;
   }
+  const postoSel = byId("posto");
+  const posto = postoSel ? postoSel.value : "";
+  const baseSubs = SUBSIDIO[posto] || 0;
+  const valEl = byId("valorIpasgo");
+  const val = parseMoney(valEl && valEl.value ? valEl.value : "0");
+  let perc = 0;
+  if (baseSubs > 0) perc = (val / baseSubs) * 100;
+  if (ipasgoPercentBadge){ ipasgoPercentBadge.textContent = String((Math.round(perc * 100) / 100).toFixed(2)).replace(".", ",") + " %"; }
 }
 // Listeners
 if (ipasgoPercentInput){
@@ -348,13 +808,7 @@ if (ipasgoPercentInput){
 if (valorIpasgoInput){
   valorIpasgoInput.addEventListener("input", () => { recomputePercentFromValor(); computeDetalhamento(); });
 }
-byId("posto").addEventListener("change", () => { 
-  recomputeIpasgoFromPercent(); 
-  recomputePercentFromValor(); 
-});
-
-
-
+byId("posto").addEventListener("change", () => { recomputePercentFromValor(); if (typeof recomputeIpasgoFromPercent === "function") recomputeIpasgoFromPercent(); computeDetalhamento(); });
 // ====== Reajuste: UI e sincronização ======
 
 // ====== Reajuste: validação/máscara e botões rápidos ======
@@ -522,12 +976,14 @@ if (reajustePercentInput){
     if (parts.length > 2) v = parts[0] + "," + parts.slice(1).join("");
     e.target.value = v;
     __reajustePercent = parseMoney(e.target.value);
+    if (__reajustePercent < 0) __reajustePercent = 0; if (__reajustePercent > 30) __reajustePercent = 30;
     computeDetalhamento();
   });
 }
 // Ao trocar o posto, reaplica o mesmo percentual sobre o novo subsídio
-byId("posto").addEventListener("change", () => { computeDetalhamento(); });
-
+byId("posto").addEventListener("change", () => { recomputePercentFromValor(); if (typeof recomputeIpasgoFromPercent === "function") recomputeIpasgoFromPercent(); computeDetalhamento(); });
+const noPrevTercoEl = byId("noPrevTerco");
+if (noPrevTercoEl) noPrevTercoEl.addEventListener("change", () => { computeDetalhamento(); });
 // ====== Auto-recalcular quando campos mudarem ======
 const camposRecalcChange = ["mes","posto","dependentes","ipasgo"];
 camposRecalcChange.forEach(id => {
@@ -539,3 +995,8 @@ camposRecalcInput.forEach(id => {
   const el = byId(id);
   if (el) el.addEventListener("input", () => { computeDetalhamento(); });
 });
+
+// force ipasgo default
+(function(){ const s = byId("ipasgo"); if (s) { s.value = "nao"; const ev = new Event("change"); s.dispatchEvent(ev);} })();
+
+byId("valorIpasgo").addEventListener("input", () => { recomputePercentFromValor(); computeDetalhamento(); });
