@@ -27,8 +27,8 @@
           <div class="form-group">
             <label for="mes">Mês</label>
             <select id="mes" required>
-              <option value="" disabled selected>Selecione...</option>
-              <option>Janeiro</option><option>Fevereiro</option><option>Março</option>
+              <option value="" disabled>Selecione...</option>
+              <option selected>Janeiro</option><option>Fevereiro</option><option>Março</option>
               <option>Abril</option><option>Maio</option><option>Junho</option>
               <option>Julho</option><option>Agosto</option><option>Setembro</option>
               <option>Outubro</option><option>Novembro</option><option>Dezembro</option>
@@ -91,28 +91,24 @@
   </div> 
 
   <div class="section-box grid-span-2">
-    <div class="section-title">IPASGO</div>
+    <div class="section-title">IPASGO / Plano de Saúde</div>
     <div class="form-group">
       <select id="ipasgo" required>
-        <option value="" disabled selected>Selecione...</option>
-        <option value="nao">Não</option>
-        <option value="sim">Sim</option>
+        <option value="nao" selected>Não</option>
+        <option value="basico">Plano Básico 6,81%</option>
+        <option value="especial">Plano Especial 12,48%</option>
+        <option value="manual">Manual</option>
       </select>
     </div>
     <div class="form-group hidden" id="grupoIpasgoValor">
-      <div class="spacer-6"></div>
-      <div class="grid-2">
-        <label for="valorIpasgo">Valor IPASGO (R$)</label>
-        <input type="text" id="valorIpasgo" inputmode="decimal" placeholder="0,00" />
-        <small class="muted">Informe R$.</small>
-      </div>
-      <div class="spacer-6"></div>
-      <div class="grid-2">
-        <label for="ipasgoPercent">Percentual de IPASGO (%)</label>
-        <input type="text" id="ipasgoPercent" inputmode="decimal" placeholder="0,00" />
-        <small class="muted"> Informe %.</small>
-      </div>
-      <div class="spacer-6"></div>
+  <div class="spacer-6"></div>
+  <label for="valorIpasgo"> <small class="muted">Informe Valor Mensal Plano de Saúde (R$)</small></label>
+  <div class="input-with-badge">
+    <input type="text" id="valorIpasgo" inputmode="decimal" placeholder="0,00" />
+    <span id="ipasgoPercentBadge" class="percent-badge">0,00&nbsp;%</span>
+  </div>
+</div>
+
     </div>   
   </div>
 
@@ -122,13 +118,13 @@
           <button type="button" id="simularReajuste" class="btn">Simular Reajuste</button>
           <div id="reajusteWrap" class="reajuste-wrap hidden">
             <div class="reajuste-quick reajuste-range">
-              <input type="range" id="reajusteRange" min="0" max="100" step="0.01" value="0" /><span id="reajusteRangeVal" class="range-val">0,00%</span></div></div>
+              <input type="range" id="reajusteRange" min="0" max="30" step="0.01" value="0" /><span id="reajusteRangeVal" class="range-val">0,00%</span></div></div>
         </div>
       </form>
     </section>
 
     <section class="card results-card" id="resultado" hidden>
-      <div class="title-row"><h2>Detalhamento da Remuneração</h2><span id="autoBadge" class="badge hidden">atualizado automaticamente</span></div>
+      <div class="title-row"><h2>Detalhamento da Remuneração no Mês Selecionado</h2><span id="autoBadge" class="badge hidden">atualizado automaticamente</span></div>
 
       <div class="resume-grid">
         <div class="resume-box">
@@ -165,6 +161,7 @@
             <span>Remuneração Bruta</span>
             <span class="azul" id="resumoBruto">R$ 0,00</span>
           </div>
+
           <div class="summary-line">
             <span>Descontos</span>
             <span class="vermelho" id="resumoDescontos">R$ 0,00</span>
@@ -181,8 +178,83 @@
           </div>
         </div>
       </div>
+
+
+     
+        <div class="section-sep" aria-hidden="true"></div>
+<div class="resume-box destaque" id="ferias13Box">
+          <h3>Adicional Férias (1/3) e 13º</h3>
+          <div class="ferias13-responsive">
+            <div class="f13-row">
+              <div class="f13-card f13-card-ferias">
+                <div class="f13-title">Adicional Férias (1/3) <button class="f13-info" type="button" aria-label="Informação sobre o terço de férias" title="Informação">i</button><div class="f13-tooltip" role="tooltip">Neste simulador, não incide contribuição previdenciária (10,5%) sobre o terço de férias.</div></div>
+                <div class="f13-item"><span>Bruto</span><strong class="azul" id="feriasBruto">R$ 0,00</strong></div>
+                <div class="f13-item">
+                  <span>Descontos</span><strong class="vermelho" id="feriasDesc">R$ 0,00</strong>
+                </div>
+                <small class="muted f13-sub" id="feriasDescBreak">Prev: R$ 0,00 | IR: R$ 0,00</small>
+                <div class="f13-item total"><span>Líquido</span><strong class="verde" id="feriasLiquido">R$ 0,00</strong></div>
+              </div>
+
+              <div class="f13-card f13-card-decimo">
+                <div class="f13-title">13º (gratificação natalina)</div>
+                <div class="f13-item"><span>Bruto</span><strong class="azul" id="decimoBruto">R$ 0,00</strong></div>
+                <div class="f13-item">
+                  <span>Descontos</span><strong class="vermelho" id="decimoDesc">R$ 0,00</strong>
+                </div>
+                <small class="muted f13-sub" id="decimoDescBreak">Prev: R$ 0,00 | IR: R$ 0,00</small>
+                <div class="f13-item total"><span>Líquido</span><strong class="verde" id="decimoLiquido">R$ 0,00</strong></div>
+              </div>
+            
+
+              <div class="f13-card f13-summary">
+                <div class="f13-title">Resumo Adicional Férias e 13º</div>
+                <div class="f13-item f13-item--stack no-divider"><span>Total Bruto</span><div class="f13-right-col"><strong class="azul" id="ferias13TotBruto">R$ 0,00</strong><small class="muted f13-delta" id="ferias13TotBrutoDelta"></small></div></div>
+              
+                <div class="f13-item f13-item--stack no-divider"><span>Total Descontos</span><div class="f13-right-col"><strong class="vermelho" id="ferias13TotDesc">R$ 0,00</strong><small class="muted f13-delta" id="ferias13TotDescDelta"></small></div></div>
+              
+                <div class="f13-item f13-item--stack total no-divider"><span>Total Líquido</span><div class="f13-right-col"><strong class="verde" id="ferias13TotLiquido">R$ 0,00</strong><small class="muted f13-delta" id="ferias13TotLiquidoDelta"></small></div></div>
+              </div>
+            </div>
+    </div>          
+  </div>
+
+        <div class="resume-box destaque" id="detalhamentoAnualBox">
+          <h3>Detalhamento Anual (remunerações mês a mês, Adicional Férias (1/3) e 13º)</h3>
+          <div class="table-scroll">
+            <table class="table table-compact" id="tabelaDetalhamentoAnual">
+              <thead id="theadDetalhamentoAnual"></thead>
+              <tbody id="tbodyDetalhamentoAnual"></tbody>
+            </table>
+          </div>
+	</div>
+
+<div class="resume-box destaque" id="valoresAnuaisBox">
+  <h3>RESUMO ANUAL</h3>
+  <div class="table-scroll">
+    <table class="table table-compact" id="tabelaValoresAnuais">
+      <tbody>
+        <tr>
+          <td><strong>Proventos</strong></td>
+          <td class="right" id="valoresAnuaisProventos">R$ 0,00</td>
+        </tr>
+        <tr>
+          <td><strong>Descontos</strong></td>
+          <td class="right" id="valoresAnuaisDescontos">R$ 0,00</td>
+        </tr>
+        <tr>
+          <td><strong>Remuneração Líquida</strong></td>
+          <td class="right" id="valoresAnuaisLiquido">R$ 0,00</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+        
     </section>
   </main>
+
+
 
   <footer class="site-footer">
     <p>© <span id="ano"></span> Todos os direitos reservados — Cadete CARVALHO, CBMGO</p>
