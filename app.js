@@ -12,19 +12,19 @@ const tbodyDescontos = byId("tbodyDescontos");
 
 // ====== Tabela de Subsídio Efetivo por Posto/Graduação ======
 const SUBSIDIO = {
-  "CEL": 38645.68,
-  "TC": 34837.44,
-  "MAJ": 31299.27,
-  "CAP": 27380.60,
-  "1º TEN": 19878.17,
-  "2º TEN": 17095.24,
-  "SUBTEN / ASP OF": 14821.93,
-  "1º SGT / Cadete 3º Ano": 12964.02,
-  "2º SGT / Cadete 2º Ano": 11235.49,
-  "3º SGT / Cadete 1º Ano": 10371.20,
-  "CB": 9458.55,
-  "SD 1º CLASSE": 8613.45,
-  "SD 2º CLASSE": 7812.64
+  "CEL": 38703.09,
+  "TC": 34887.28,
+  "MAJ": 31344.05,
+  "CAP": 27419.78,
+  "1º TEN": 19906.60,
+  "2º TEN": 17119.67,
+  "SUBTEN / ASP OF": 14843.14,
+  "1º SGT / Cadete 3º Ano": 12982.57,
+  "2º SGT / Cadete 2º Ano": 11251.56,
+  "3º SGT / Cadete 1º Ano": 10386.05,
+  "CB": 9472.08,
+  "SD 1º CLASSE": 8625.76,
+  "SD 2º CLASSE": 7823.09
 };
 
 // ====== Constantes fixas ======
