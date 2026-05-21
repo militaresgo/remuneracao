@@ -149,12 +149,12 @@ function getAdicionaisCalculo(){
   let totalTributavel = 0;
   let totalIsento = 0;
   if (adicionaisSelecionados.has("AC2")) {
-    items.push({ sigla: "AC2", desc: AC_LABELS.AC2, valor: AC2_VALOR, isento: false });
-    totalTributavel += AC2_VALOR;
+    items.push({ sigla: "AC2", desc: AC_LABELS.AC2, valor: AC2_VALOR, isento: true });
+    totalIsento += AC2_VALOR;
   }
   if (adicionaisSelecionados.has("AC3")) {
-    items.push({ sigla: "AC3", desc: AC_LABELS.AC3, valor: AC3_VALOR, isento: false });
-    totalTributavel += AC3_VALOR;
+    items.push({ sigla: "AC3", desc: AC_LABELS.AC3, valor: AC3_VALOR, isento: true });
+    totalIsento += AC3_VALOR;
   }
   if (adicionaisSelecionados.has("AC4")) {
     const ac4Total = calcAc4Total(ac4Config);
