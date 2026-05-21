@@ -10,7 +10,7 @@ const byId = (id) => document.getElementById(id);
 const tbodyProventos = byId("tbodyProventos");
 const tbodyDescontos = byId("tbodyDescontos");
 
-// ====== Tabela de Subsídio Efetivo por Posto/Graduação ====== SUBTEN ATUAL 15453.34
+// ====== Tabela de Subsídio Efetivo por Posto/Graduação ====== SUBTEN ATUAL 17185.74
 const SUBSIDIO = {
   "CEL": 40294.19,
   "TC": 36321.50,
@@ -18,7 +18,7 @@ const SUBSIDIO = {
   "CAP": 28547.01,
   "1º TEN": 20724.98,
   "2º TEN": 17823.47,
-  "SUBTEN / ASP OF": 15453.34,
+  "SUBTEN / ASP OF": 17185.74,
   "1º SGT / Cadete 3º Ano": 13516.29,
   "2º SGT / Cadete 2º Ano": 11714.11,
   "3º SGT / Cadete 1º Ano": 10813.02,
@@ -70,6 +70,43 @@ const ipasgoPercentInput = byId("ipasgoPercent");
 const btnReajuste = byId('simularReajuste');
 const reajusteWrap = byId('reajusteWrap');
 const reajustePercentInput = byId('reajustePercent');
+const adicionaisSelect = byId("adicionaisSelect");
+const adicionaisChips = byId("adicionaisChips");
+const ac4Modal = byId("ac4Modal");
+const ac4TotalPreview = byId("ac4TotalPreview");
+const ac4BreakdownPreview = byId("ac4BreakdownPreview");
+const ac4ConfirmBtn = byId("ac4Confirm");
+const ac4CancelBtn = byId("ac4Cancel");
+const AC2_VALOR = 1050.00;
+const AC3_VALOR = 828.00;
+const AC5_VALOR = 1000.00;
+const AC4_TOTAL_24H = {
+  seg: 658.59,
+  ter: 658.59,
+  qua: 658.59,
+  qui: 658.59,
+  sex: 908.63,
+  sab: 908.63,
+  dom: 888.75
+};
+const AC4_LABEL_DIA = {
+  seg: "Seg",
+  ter: "Ter",
+  qua: "Qua",
+  qui: "Qui",
+  sex: "Sex",
+  sab: "Sab",
+  dom: "Dom"
+};
+const AC_LABELS = {
+  AC2: "AC2 (Horas-Aulas Ministradas)",
+  AC3: "AC3 (Indenização por localidade)",
+  AC4: "AC4 (Indenização por Serviço Extraordinário)",
+  AC5: "AC5 (Auxílio Alimentação)"
+};
+let adicionaisSelecionados = new Set();
+let ac4Config = buildAc4DefaultConfig();
+let ac4DraftConfig = buildAc4DefaultConfig();
 let __reajustePercent = 0;
 const MAX_REAJUSTE_PERCENT = 30;
 const MIN_REAJUSTE_PERCENT = 0;
@@ -79,6 +116,196 @@ ipasgoSel.addEventListener("change", () => {
   recomputePercentFromValor();
   computeDetalhamento();
 });
+
+function buildAc4DefaultConfig(){
+  return {
+    seg: { enabled: false, qty: 1 },
+    ter: { enabled: false, qty: 1 },
+    qua: { enabled: false, qty: 1 },
+    qui: { enabled: false, qty: 1 },
+    sex: { enabled: false, qty: 1 },
+    sab: { enabled: false, qty: 1 },
+    dom: { enabled: false, qty: 1 }
+  };
+}
+
+function cloneAc4Config(cfg){
+  return JSON.parse(JSON.stringify(cfg || buildAc4DefaultConfig()));
+}
+
+function calcAc4Total(cfg){
+  let total = 0;
+  Object.keys(AC4_TOTAL_24H).forEach((day) => {
+    const data = cfg && cfg[day] ? cfg[day] : { enabled: false, qty: 1 };
+    if (!data.enabled) return;
+    const qty = Math.max(1, Math.min(5, Number(data.qty || 1)));
+    total += AC4_TOTAL_24H[day] * qty;
+  });
+  return round2(total);
+}
+
+function getAdicionaisCalculo(){
+  const items = [];
+  let totalTributavel = 0;
+  let totalIsento = 0;
+  if (adicionaisSelecionados.has("AC2")) {
+    items.push({ sigla: "AC2", desc: AC_LABELS.AC2, valor: AC2_VALOR, isento: false });
+    totalTributavel += AC2_VALOR;
+  }
+  if (adicionaisSelecionados.has("AC3")) {
+    items.push({ sigla: "AC3", desc: AC_LABELS.AC3, valor: AC3_VALOR, isento: false });
+    totalTributavel += AC3_VALOR;
+  }
+  if (adicionaisSelecionados.has("AC4")) {
+    const ac4Total = calcAc4Total(ac4Config);
+    items.push({ sigla: "AC4", desc: AC_LABELS.AC4, valor: ac4Total, isento: true });
+    totalIsento += ac4Total;
+  }
+  if (adicionaisSelecionados.has("AC5")) {
+    items.push({ sigla: "AC5", desc: AC_LABELS.AC5, valor: AC5_VALOR, isento: true });
+    totalIsento += AC5_VALOR;
+  }
+  return {
+    items,
+    totalTributavel: round2(totalTributavel),
+    totalIsento: round2(totalIsento),
+    total: round2(totalTributavel + totalIsento)
+  };
+}
+
+function updateAc4Preview(){
+  if (!ac4TotalPreview || !ac4BreakdownPreview) return;
+  const total = calcAc4Total(ac4DraftConfig);
+  const breakdown = [];
+  Object.keys(AC4_TOTAL_24H).forEach((day) => {
+    const data = ac4DraftConfig && ac4DraftConfig[day] ? ac4DraftConfig[day] : { enabled: false, qty: 1 };
+    const qty = Math.max(1, Math.min(5, Number(data.qty || 1)));
+    const fator = data.enabled ? qty : 0;
+    const dayTotal = round2(AC4_TOTAL_24H[day] * fator);
+    breakdown.push(`${AC4_LABEL_DIA[day]}: ${fator}x ${fmt(AC4_TOTAL_24H[day])} = ${fmt(dayTotal)}`);
+  });
+  ac4TotalPreview.textContent = fmt(total);
+  ac4BreakdownPreview.textContent = breakdown.join(" | ");
+}
+
+function syncAc4ModalInputs(){
+  if (!ac4Modal) return;
+  const checks = ac4Modal.querySelectorAll(".ac4-day input[type='checkbox']");
+  checks.forEach((el) => {
+    const day = el.dataset.day;
+    const data = ac4DraftConfig[day];
+    if (!data) return;
+    el.checked = !!data.enabled;
+    const qtyEl = ac4Modal.querySelector(`.ac4-qty[data-day='${day}']`);
+    if (qtyEl){
+      qtyEl.value = String(Math.max(1, Math.min(5, Number(data.qty || 1))));
+      qtyEl.disabled = !data.enabled;
+    }
+  });
+  updateAc4Preview();
+}
+
+function openAc4Modal(){
+  if (!ac4Modal) return;
+  ac4DraftConfig = cloneAc4Config(ac4Config);
+  ac4Modal.classList.remove("hidden");
+  syncAc4ModalInputs();
+}
+
+function closeAc4Modal(){
+  if (!ac4Modal) return;
+  ac4Modal.classList.add("hidden");
+}
+
+function renderAdicionaisChips(){
+  if (!adicionaisChips) return;
+  const ordem = ["AC2", "AC3", "AC4", "AC5"];
+  const chips = ordem.filter((cod) => adicionaisSelecionados.has(cod));
+  adicionaisChips.innerHTML = chips.map((cod) => `
+    <div class="adicional-chip" title="${escapeHtml(AC_LABELS[cod] || cod)}">
+      <span>${escapeHtml(cod)}</span>
+      <button type="button" class="chip-remove" data-remove-adicional="${escapeHtml(cod)}" aria-label="Remover ${escapeHtml(cod)}">x</button>
+    </div>
+  `).join("");
+}
+
+function bindAdicionaisEventos(){
+  if (adicionaisSelect){
+    adicionaisSelect.addEventListener("change", () => {
+      const val = adicionaisSelect.value || "";
+      if (!val) return;
+      if (val === "AC4"){
+        openAc4Modal();
+      } else {
+        adicionaisSelecionados.add(val);
+        renderAdicionaisChips();
+        computeDetalhamento();
+      }
+      adicionaisSelect.value = "";
+    });
+  }
+  if (adicionaisChips){
+    adicionaisChips.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-remove-adicional]");
+      if (!btn) return;
+      const cod = btn.getAttribute("data-remove-adicional");
+      if (!cod) return;
+      adicionaisSelecionados.delete(cod);
+      if (cod === "AC4"){
+        ac4Config = buildAc4DefaultConfig();
+        ac4DraftConfig = buildAc4DefaultConfig();
+      }
+      renderAdicionaisChips();
+      computeDetalhamento();
+    });
+  }
+  if (ac4Modal){
+    ac4Modal.addEventListener("change", (e) => {
+      const target = e.target;
+      if (!target) return;
+      if (target.matches(".ac4-day input[type='checkbox']")){
+        const day = target.dataset.day;
+        if (!ac4DraftConfig[day]) return;
+        ac4DraftConfig[day].enabled = !!target.checked;
+        const qtyEl = ac4Modal.querySelector(`.ac4-qty[data-day='${day}']`);
+        if (qtyEl) qtyEl.disabled = !target.checked;
+        updateAc4Preview();
+        return;
+      }
+      if (target.matches(".ac4-qty")){
+        const day = target.dataset.day;
+        if (!ac4DraftConfig[day]) return;
+        let qty = Number(target.value || 1);
+        if (!isFinite(qty)) qty = 1;
+        qty = Math.max(1, Math.min(5, qty));
+        ac4DraftConfig[day].qty = qty;
+        updateAc4Preview();
+      }
+    });
+    if (ac4ConfirmBtn){
+      ac4ConfirmBtn.addEventListener("click", () => {
+        ac4Config = cloneAc4Config(ac4DraftConfig);
+        const hasAnyDay = Object.keys(ac4Config).some((day) => ac4Config[day] && ac4Config[day].enabled);
+        if (hasAnyDay) adicionaisSelecionados.add("AC4");
+        else adicionaisSelecionados.delete("AC4");
+        renderAdicionaisChips();
+        closeAc4Modal();
+        computeDetalhamento();
+      });
+    }
+    if (ac4CancelBtn){
+      ac4CancelBtn.addEventListener("click", () => {
+        closeAc4Modal();
+      });
+    }
+    ac4Modal.addEventListener("click", (e) => {
+      if (e.target === ac4Modal) closeAc4Modal();
+    });
+  }
+}
+
+bindAdicionaisEventos();
+renderAdicionaisChips();
 
 
 
@@ -146,10 +373,18 @@ function computeDetalhamento() {
   // 1) Proventos
   const baseSubs = SUBSIDIO[posto];
   const subsidio = round2(baseSubs * (1 + (__reajustePercent||0)/100));
+  const adicionaisCalc = getAdicionaisCalculo();
+  const adicionaisTributaveis = adicionaisCalc.totalTributavel;
+  const adicionaisIsentos = adicionaisCalc.totalIsento;
+  const rendimentoTributavel = round2(subsidio + adicionaisTributaveis);
   const proventos = [
     { desc: `Subsídio Efetivo (${posto})` + (__reajustePercent ? ` (+${(__reajustePercent).toFixed(2).replace(".",",")}% )` : ""), valor: subsidio },
     { desc: "Abono Fardamento", valor: ABONO_FARDAMENTO }
   ];
+  adicionaisCalc.items.forEach((ad) => {
+    const sufixo = ad.isento ? " (isento de IRPF e sem descontos)" : "";
+    proventos.push({ desc: `${ad.desc}${sufixo}`, valor: round2(ad.valor) });
+  });
   const totalBruto = sum(proventos.map(p => p.valor));
 
   // 2) Descontos fixos + pensão
@@ -175,13 +410,13 @@ else if (ipasgoMode === "manual") { ipasgoValor = round2(parseMoney(valorIpasgoI
   const deducoesLegais = round2(pensao + dedDependentes);
 
   // Desconto simplificado mensal: 25% do rendimento, limitado
-  const simplificado = Math.min(subsidio * 0.25, P.desconto_simplificado_limite);
+  const simplificado = Math.min(rendimentoTributavel * 0.25, P.desconto_simplificado_limite);
 
   // Usa o MAIOR entre deduções legais e desconto simplificado
   const descontoAplicado = Math.max(deducoesLegais, simplificado);
   const metodo = descontoAplicado === simplificado;
 
-  let baseCalc = subsidio - descontoAplicado;
+  let baseCalc = rendimentoTributavel - descontoAplicado;
   if (baseCalc < 0) baseCalc = 0;
 
   // Aplica a tabela progressiva mensal
@@ -224,16 +459,17 @@ if (ipasgoSelecionado) {
   let totalBrutoBase = 0, totalDescontosBase = 0, liquidoBase = 0;
   if ((__reajustePercent||0) > 0){
     // Totais base (sem reajuste) para comparação
-    totalBrutoBase = round2(baseSubs + ABONO_FARDAMENTO);
+    totalBrutoBase = round2(baseSubs + ABONO_FARDAMENTO + adicionaisCalc.total);
     const pensaoBase = round2(baseSubs * ALIQUOTA_PENSAO);
+    const rendimentoTributavelBase = round2(baseSubs + adicionaisTributaveis);
 
     const periodoBase = ["Janeiro","Fevereiro","Março","Abril"].includes(mes) ? "jan_abr" : "mai_dez";
     const Pbase = PARAMS_IRRF[periodoBase];
     const dedDependentesBase = round2(Pbase.dependente * dependentes);
     const deducoesLegaisBase = round2(pensaoBase + dedDependentesBase);
-    const simplificadoBase = Math.min(baseSubs * 0.25, Pbase.desconto_simplificado_limite);
+    const simplificadoBase = Math.min(rendimentoTributavelBase * 0.25, Pbase.desconto_simplificado_limite);
     const descontoAplicadoBase = Math.max(deducoesLegaisBase, simplificadoBase);
-    let baseCalcBase = baseSubs - descontoAplicadoBase;
+    let baseCalcBase = rendimentoTributavelBase - descontoAplicadoBase;
     if (baseCalcBase < 0) baseCalcBase = 0;
     let aliquotaBase = 0, deducaoBase = 0;
     for (const faixa of Pbase.faixas) {
@@ -473,6 +709,9 @@ const base13 = bruto13 - prev13 - dedDependentes13;
       const _dependentes = (typeof dependentes !== "undefined" && isFinite(dependentes)) ? dependentes : (parseInt(byId("dependentes")?.value||"0",10)||0);
       const _ipasgoValor = (typeof ipasgoValor !== "undefined" && isFinite(ipasgoValor)) ? ipasgoValor : (typeof parseMoney === "function" ? parseMoney(byId("valorIpasgo")?.value || "0") : 0);
       const _associacaoValor = (typeof associacaoValor !== "undefined" && isFinite(associacaoValor)) ? associacaoValor : (typeof parseMoney === "function" ? parseMoney(byId("associacaoValor")?.value || "0") : 0);
+      const _adicionaisTrib = (typeof adicionaisTributaveis !== "undefined" && isFinite(adicionaisTributaveis)) ? adicionaisTributaveis : 0;
+      const _adicionaisIsentos = (typeof adicionaisIsentos !== "undefined" && isFinite(adicionaisIsentos)) ? adicionaisIsentos : 0;
+      const _adicionaisTotal = round2(_adicionaisTrib + _adicionaisIsentos);
 
       // Helpers
       const headCols = meses;
@@ -480,12 +719,13 @@ const base13 = bruto13 - prev13 - dedDependentes13;
 
       const computeMensal = (mi) => {
         const PM = PARAMS_IRRF[ mi <= 3 ? "jan_abr" : "mai_dez" ];
-        const bruto = round2(_subsidio + _ABONO_FARDAMENTO);
+        const rendimentoTribMensal = round2(_subsidio + _adicionaisTrib);
+        const bruto = round2(_subsidio + _ABONO_FARDAMENTO + _adicionaisTotal);
         const pensaoM = round2(_subsidio * _ALIQUOTA_PENSAO);
         const dedDepM = round2(PM.dependente * _dependentes);
-        const simplifM = Math.min(_subsidio * 0.25, PM.desconto_simplificado_limite);
+        const simplifM = Math.min(rendimentoTribMensal * 0.25, PM.desconto_simplificado_limite);
         const dedLegaisM = round2(pensaoM + dedDepM);
-        let baseCalcM = _subsidio - Math.max(dedLegaisM, simplifM);
+        let baseCalcM = rendimentoTribMensal - Math.max(dedLegaisM, simplifM);
         if (baseCalcM < 0) baseCalcM = 0;
         let aM = 0, dM = 0;
         for (const faixa of PM.faixas) { if (baseCalcM <= faixa.ate) { aM = faixa.aliquota; dM = faixa.deducao; break; } }
@@ -574,14 +814,18 @@ const base13 = bruto13 - prev13 - dedDependentes13;
       const _dep = (typeof dependentes !== "undefined" && isFinite(dependentes)) ? dependentes : (parseInt(byId("dependentes")?.value||"0",10)||0);
       const _ipas = (typeof ipasgoValor !== "undefined" && isFinite(ipasgoValor)) ? ipasgoValor : (typeof parseMoney==="function" ? parseMoney(byId("valorIpasgo")?.value||"0") : 0);
       const _assoc = (typeof associacaoValor !== "undefined" && isFinite(associacaoValor)) ? associacaoValor : (typeof parseMoney==="function" ? parseMoney(byId("associacaoValor")?.value||"0") : 0);
+      const _adTrib = (typeof adicionaisTributaveis !== "undefined" && isFinite(adicionaisTributaveis)) ? adicionaisTributaveis : 0;
+      const _adIsentos = (typeof adicionaisIsentos !== "undefined" && isFinite(adicionaisIsentos)) ? adicionaisIsentos : 0;
+      const _adTot = round2(_adTrib + _adIsentos);
       function calcMensal(mi){
         const PM = mi<=3 ? PM_JA : PM_MD;
-        const bruto = round2(_subsidio + _AF);
+        const rendimentoTrib = round2(_subsidio + _adTrib);
+        const bruto = round2(_subsidio + _AF + _adTot);
         const pens = round2(_subsidio * _ALI);
         const dedDep = round2(PM.dependente * _dep);
-        const simpl = Math.min(_subsidio * 0.25, PM.desconto_simplificado_limite);
+        const simpl = Math.min(rendimentoTrib * 0.25, PM.desconto_simplificado_limite);
         const dedLeg = round2(pens + dedDep);
-        let base = _subsidio - Math.max(dedLeg, simpl);
+        let base = rendimentoTrib - Math.max(dedLeg, simpl);
         if (base < 0) base = 0;
         let a=0,d=0;
         for (const fx of PM.faixas){ if (base <= fx.ate){ a=fx.aliquota; d=fx.deducao; break; } }
@@ -736,6 +980,12 @@ byId("limpar").addEventListener("click", () => {
   form.reset();
   valorIpasgoInput.value = "";
   byId("associacaoValor").value = "";
+  adicionaisSelecionados = new Set();
+  ac4Config = buildAc4DefaultConfig();
+  ac4DraftConfig = buildAc4DefaultConfig();
+  if (adicionaisSelect) adicionaisSelect.value = "";
+  renderAdicionaisChips();
+  closeAc4Modal();
   grupoIpasgoValor.classList.add("hidden");
   if (reajusteWrap) reajusteWrap.classList.add("hidden");
   

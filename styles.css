@@ -53,7 +53,9 @@ body{
   margin-left:auto;
   color:var(--accent);
   font-weight:700;
-  white-space:nowrap;
+  text-align:right;
+  max-width:520px;
+  white-space:normal;
 }
 @media (max-width:840px){
   .simulador-linha .database-tag{
@@ -79,6 +81,51 @@ body{
 @media (max-width:840px){ .grid-2{grid-template-columns:1fr} }
 
 .form-group{display:flex;flex-direction:column;gap:8px}
+.dep-add-group{grid-column:1 / -1}
+.dep-add-row{
+  display:flex;
+  gap:12px;
+  align-items:flex-end;
+}
+.dep-col,.adicionais-col{
+  flex:1;
+  min-width:220px;
+}
+.adicionais-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:4px;
+}
+.adicional-chip{
+  position:relative;
+  background:rgba(34,197,94,.22);
+  border:1px solid rgba(34,197,94,.55);
+  color:#bbf7d0;
+  border-radius:10px;
+  padding:8px 26px 8px 10px;
+  font-size:.86rem;
+  font-weight:700;
+  letter-spacing:.2px;
+  min-width:54px;
+}
+.adicional-chip .chip-remove{
+  position:absolute;
+  top:2px;
+  right:4px;
+  border:0;
+  background:transparent;
+  color:#86efac;
+  font-size:.72rem;
+  line-height:1;
+  cursor:pointer;
+  opacity:.8;
+}
+.adicional-chip .chip-remove:hover{opacity:1}
+@media (max-width:840px){
+  .dep-add-row{flex-direction:column;align-items:stretch}
+  .dep-col,.adicionais-col{min-width:0}
+}
 label{font-weight:600}
 select,input{
   width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.08);
@@ -418,6 +465,68 @@ option:hover { background-color: #1b2433 !important; }
 .f13-card-decimo .f13-item:first-of-type{border-bottom:none !important}
 
 /* Ensure no dashed line between Bruto and Descontos in 13º */
+.ac4-modal{
+  position:fixed;
+  inset:0;
+  background:rgba(2,6,23,.72);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  z-index:1200;
+}
+.ac4-modal-card{
+  width:min(940px, 100%);
+  background:linear-gradient(180deg,#0f172a,#0b1220);
+  border:1px solid rgba(148,163,184,.35);
+  border-radius:14px;
+  padding:14px;
+}
+.ac4-days-row,
+.ac4-qty-row{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(64px,1fr));
+  gap:8px;
+}
+.ac4-days-row{margin:10px 0 8px}
+.ac4-day{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  font-weight:600;
+  font-size:.88rem;
+}
+.ac4-day input{width:auto;margin:0}
+.ac4-qty{
+  width:100%;
+  text-align:center;
+  padding:8px 6px;
+  border-radius:10px;
+}
+.ac4-total-row{
+  margin-top:10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-weight:700;
+}
+#ac4BreakdownPreview{
+  display:block;
+  margin-top:6px;
+  line-height:1.35;
+}
+.ac4-actions{
+  margin-top:10px;
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+}
+.ac4-btn-confirm{
+  background:linear-gradient(180deg,#16a34a,#15803d);
+  border-color:transparent;
+  color:#f0fdf4;
+}
 .f13-card-decimo .f13-title + .f13-item{border-bottom:none !important}
 
 

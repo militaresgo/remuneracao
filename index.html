@@ -14,7 +14,7 @@
       <div class="brand-mark"><img src="assets/viatura-header.png" alt="Viatura do Corpo de Bombeiros" class="brand-img"></div>
   <div class="brand-text">
         <h1>Remuneração Militares do CBMGO</h1>
-        <p class="simulador-linha"><span>Simulador de proventos e descontos</span><span class="database-tag"> - com database 4,26% - maio/2026</span></p>
+        <p class="simulador-linha"><span>Simulador de proventos e descontos</span><span class="database-tag">Database Maio/2026 (4,26%) + reestruturação em tratativas</span></p>
       </div>
     </div>
   </header>
@@ -55,14 +55,29 @@
             </select>
           </div>
 
-          <div class="form-group">
-            <label for="dependentes">Número de dependentes</label>
-            <select id="dependentes" required>
-              <option value="0" selected>0</option>
-              <option>1</option><option>2</option><option>3</option><option>4</option>
-              <option>5</option><option>6</option><option>7</option><option>8</option>
-              <option>9</option><option>10</option>
-            </select>
+          <div class="form-group dep-add-group">
+            <div class="dep-add-row">
+              <div class="dep-col">
+                <label for="dependentes">Número de dependentes</label>
+                <select id="dependentes" required>
+                  <option value="0" selected>0</option>
+                  <option>1</option><option>2</option><option>3</option><option>4</option>
+                  <option>5</option><option>6</option><option>7</option><option>8</option>
+                  <option>9</option><option>10</option>
+                </select>
+              </div>
+              <div class="adicionais-col">
+                <label for="adicionaisSelect">Adicionais</label>
+                <select id="adicionaisSelect">
+                  <option value="" selected>Selecione...</option>
+                  <option value="AC2">AC2 (Horas-Aulas Ministradas)</option>
+                  <option value="AC3">AC3 (Indenização por localidade)</option>
+                  <option value="AC4">AC4 (Indenização por Serviço Extraordinário)</option>
+                  <option value="AC5">AC5 (Auxílio Alimentação)</option>
+                </select>
+              </div>
+            </div>
+            <div id="adicionaisChips" class="adicionais-chips" aria-live="polite"></div>
             <small class="muted">Valor de dedução mensal por dependente será aplicado automaticamente.</small>
           </div>
 
@@ -122,6 +137,40 @@
         </div>
       </form>
     </section>
+
+        <div id="ac4Modal" class="ac4-modal hidden" role="dialog" aria-modal="true" aria-labelledby="ac4Titulo">
+      <div class="ac4-modal-card">
+        <h3 id="ac4Titulo">AC4 (Indenização por Serviço Extraordinário)</h3>
+        <p class="muted">Selecione os dias da semana e a quantidade de serviços (1 a 5) para cada dia.</p>
+        <div class="ac4-days-row">
+          <label class="ac4-day"><input type="checkbox" data-day="seg"><span>Seg</span></label>
+          <label class="ac4-day"><input type="checkbox" data-day="ter"><span>Ter</span></label>
+          <label class="ac4-day"><input type="checkbox" data-day="qua"><span>Qua</span></label>
+          <label class="ac4-day"><input type="checkbox" data-day="qui"><span>Qui</span></label>
+          <label class="ac4-day"><input type="checkbox" data-day="sex"><span>Sex</span></label>
+          <label class="ac4-day"><input type="checkbox" data-day="sab"><span>Sab</span></label>
+          <label class="ac4-day"><input type="checkbox" data-day="dom"><span>Dom</span></label>
+        </div>
+        <div class="ac4-qty-row">
+          <select data-day="seg" class="ac4-qty"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+          <select data-day="ter" class="ac4-qty"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+          <select data-day="qua" class="ac4-qty"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+          <select data-day="qui" class="ac4-qty"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+          <select data-day="sex" class="ac4-qty"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+          <select data-day="sab" class="ac4-qty"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+          <select data-day="dom" class="ac4-qty"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+        </div>
+        <div class="ac4-total-row">
+          <span>Total AC4</span>
+          <strong id="ac4TotalPreview" class="verde">R$ 0,00</strong>
+        </div>
+        <small id="ac4BreakdownPreview" class="muted"></small>
+        <div class="ac4-actions">
+          <button type="button" id="ac4Confirm" class="btn ac4-btn-confirm">Confirmar</button>
+          <button type="button" id="ac4Cancel" class="btn ghost">Cancelar</button>
+        </div>
+      </div>
+    </div>
 
     <section class="card results-card" id="resultado" hidden>
       <div class="title-row"><h2>Detalhamento da Remuneração no Mês Selecionado</h2><span id="autoBadge" class="badge hidden">atualizado automaticamente</span></div>
