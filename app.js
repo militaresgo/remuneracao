@@ -10,21 +10,21 @@ const byId = (id) => document.getElementById(id);
 const tbodyProventos = byId("tbodyProventos");
 const tbodyDescontos = byId("tbodyDescontos");
 
-// ====== Tabela de Subsídio Efetivo por Posto/Graduação ====== SUBTEN ATUAL 14821.93
+// ====== Tabela de Subsídio Efetivo por Posto/Graduação ====== SUBTEN ATUAL 15453.34
 const SUBSIDIO = {
-  "CEL": 38645.68,
-  "TC": 34837.44,
-  "MAJ": 31299.27,
-  "CAP": 27380.60,
-  "1º TEN": 19878.17,
-  "2º TEN": 17095.24,
-  "SUBTEN / ASP OF": 14821.93,
-  "1º SGT / Cadete 3º Ano": 12964.02,
-  "2º SGT / Cadete 2º Ano": 11235.49,
-  "3º SGT / Cadete 1º Ano": 10371.20,
-  "CB": 9458.55,
-  "SD 1º CLASSE": 8613.45,
-  "SD 2º CLASSE": 7812.64
+  "CEL": 40294.19,
+  "TC": 36321.50,
+  "MAJ": 32632.62,
+  "CAP": 28547.01,
+  "1º TEN": 20724.98,
+  "2º TEN": 17823.47,
+  "SUBTEN / ASP OF": 15453.34,
+  "1º SGT / Cadete 3º Ano": 13516.29,
+  "2º SGT / Cadete 2º Ano": 11714.11,
+  "3º SGT / Cadete 1º Ano": 10813.02,
+  "CB": 9861.48,
+  "SD 1º CLASSE": 8980.36,
+  "SD 2º CLASSE": 8145.45
 };
 
 // ====== Constantes fixas ======
