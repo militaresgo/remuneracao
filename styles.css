@@ -475,6 +475,7 @@ option:hover { background-color: #1b2433 !important; }
   padding:16px;
   z-index:1200;
 }
+.ac4-modal.hidden{display:none}
 .ac4-modal-card{
   width:min(940px, 100%);
   background:linear-gradient(180deg,#0f172a,#0b1220);

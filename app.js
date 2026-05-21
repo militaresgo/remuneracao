@@ -119,13 +119,13 @@ ipasgoSel.addEventListener("change", () => {
 
 function buildAc4DefaultConfig(){
   return {
-    seg: { enabled: false, qty: 1 },
-    ter: { enabled: false, qty: 1 },
-    qua: { enabled: false, qty: 1 },
-    qui: { enabled: false, qty: 1 },
-    sex: { enabled: false, qty: 1 },
-    sab: { enabled: false, qty: 1 },
-    dom: { enabled: false, qty: 1 }
+    seg: { enabled: false, qty: 0 },
+    ter: { enabled: false, qty: 0 },
+    qua: { enabled: false, qty: 0 },
+    qui: { enabled: false, qty: 0 },
+    sex: { enabled: false, qty: 0 },
+    sab: { enabled: false, qty: 0 },
+    dom: { enabled: false, qty: 0 }
   };
 }
 
@@ -136,9 +136,9 @@ function cloneAc4Config(cfg){
 function calcAc4Total(cfg){
   let total = 0;
   Object.keys(AC4_TOTAL_24H).forEach((day) => {
-    const data = cfg && cfg[day] ? cfg[day] : { enabled: false, qty: 1 };
+    const data = cfg && cfg[day] ? cfg[day] : { enabled: false, qty: 0 };
     if (!data.enabled) return;
-    const qty = Math.max(1, Math.min(5, Number(data.qty || 1)));
+    const qty = Math.max(0, Math.min(5, Number(data.qty ?? 0)));
     total += AC4_TOTAL_24H[day] * qty;
   });
   return round2(total);
@@ -178,8 +178,8 @@ function updateAc4Preview(){
   const total = calcAc4Total(ac4DraftConfig);
   const breakdown = [];
   Object.keys(AC4_TOTAL_24H).forEach((day) => {
-    const data = ac4DraftConfig && ac4DraftConfig[day] ? ac4DraftConfig[day] : { enabled: false, qty: 1 };
-    const qty = Math.max(1, Math.min(5, Number(data.qty || 1)));
+    const data = ac4DraftConfig && ac4DraftConfig[day] ? ac4DraftConfig[day] : { enabled: false, qty: 0 };
+    const qty = Math.max(0, Math.min(5, Number(data.qty ?? 0)));
     const fator = data.enabled ? qty : 0;
     const dayTotal = round2(AC4_TOTAL_24H[day] * fator);
     breakdown.push(`${AC4_LABEL_DIA[day]}: ${fator}x ${fmt(AC4_TOTAL_24H[day])} = ${fmt(dayTotal)}`);
@@ -198,7 +198,7 @@ function syncAc4ModalInputs(){
     el.checked = !!data.enabled;
     const qtyEl = ac4Modal.querySelector(`.ac4-qty[data-day='${day}']`);
     if (qtyEl){
-      qtyEl.value = String(Math.max(1, Math.min(5, Number(data.qty || 1))));
+      qtyEl.value = String(Math.max(0, Math.min(5, Number(data.qty ?? 0))));
       qtyEl.disabled = !data.enabled;
     }
   });
@@ -275,9 +275,9 @@ function bindAdicionaisEventos(){
       if (target.matches(".ac4-qty")){
         const day = target.dataset.day;
         if (!ac4DraftConfig[day]) return;
-        let qty = Number(target.value || 1);
-        if (!isFinite(qty)) qty = 1;
-        qty = Math.max(1, Math.min(5, qty));
+        let qty = Number(target.value ?? 0);
+        if (!isFinite(qty)) qty = 0;
+        qty = Math.max(0, Math.min(5, qty));
         ac4DraftConfig[day].qty = qty;
         updateAc4Preview();
       }
