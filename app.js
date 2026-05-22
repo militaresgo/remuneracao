@@ -104,7 +104,7 @@ const AC_LABELS = {
   AC4: "AC4 (Indenização por Serviço Extraordinário)",
   AC5: "AC5 (Auxílio Alimentação)"
 };
-let adicionaisSelecionados = new Set();
+let adicionaisSelecionados = new Set(["AC5"]);
 let ac4Config = buildAc4DefaultConfig();
 let ac4DraftConfig = buildAc4DefaultConfig();
 let __reajustePercent = 0;
@@ -980,7 +980,7 @@ byId("limpar").addEventListener("click", () => {
   form.reset();
   valorIpasgoInput.value = "";
   byId("associacaoValor").value = "";
-  adicionaisSelecionados = new Set();
+  adicionaisSelecionados = new Set(["AC5"]);
   ac4Config = buildAc4DefaultConfig();
   ac4DraftConfig = buildAc4DefaultConfig();
   if (adicionaisSelect) adicionaisSelect.value = "";
