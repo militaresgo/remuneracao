@@ -32,6 +32,8 @@ const ABONO_FARDAMENTO = 51.99;
 const FARDAMENTO = 51.99;
 const FAS = round2(SUBSIDIO["CAP"] * 0.0035);
 const ALIQUOTA_PENSAO = 0.105;
+const IPASGO_TETO_BASICO = 838.71;
+const IPASGO_TETO_ESPECIAL = 1247.93;
 
 // ====== Parâmetros IRRF Mensal 2025 (oficiais RFB) ======
 // Fonte: gov.br/receitafederal - Tributação de 2025 (incidência mensal)
@@ -394,9 +396,9 @@ let ipasgoSelecionado = false;
   let ipasgoTetoApplied = false;
 const ipasgoMode = ipasgoSel ? ipasgoSel.value : "nao";
 if (ipasgoMode === "basico") { ipasgoValor = round2(subsidio * 0.0681);
-  if (ipasgoValor > 838.71) { ipasgoValor = 838.71; } ipasgoSelecionado = true; }
+  if (ipasgoValor > IPASGO_TETO_BASICO) { ipasgoValor = IPASGO_TETO_BASICO; ipasgoTetoApplied = true; } ipasgoSelecionado = true; }
 else if (ipasgoMode === "especial") { ipasgoValor = round2(subsidio * 0.1248);
-  if (ipasgoValor > 1247.93) { ipasgoValor = 1247.93; } ipasgoSelecionado = true; }
+  if (ipasgoValor > IPASGO_TETO_ESPECIAL) { ipasgoValor = IPASGO_TETO_ESPECIAL; ipasgoTetoApplied = true; } ipasgoSelecionado = true; }
 else if (ipasgoMode === "manual") { ipasgoValor = round2(parseMoney(valorIpasgoInput ? valorIpasgoInput.value : "0")); ipasgoSelecionado = ipasgoValor > 0; }
 
   const associacaoValor = parseMoney(byId("associacaoValor").value);
