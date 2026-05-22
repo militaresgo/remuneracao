@@ -394,9 +394,9 @@ let ipasgoSelecionado = false;
   let ipasgoTetoApplied = false;
 const ipasgoMode = ipasgoSel ? ipasgoSel.value : "nao";
 if (ipasgoMode === "basico") { ipasgoValor = round2(subsidio * 0.0681);
-  if (ipasgoValor >= 785.46) { ipasgoValor = 785.46; } ipasgoSelecionado = true; }
+  if (ipasgoValor > 838.71) { ipasgoValor = 838.71; } ipasgoSelecionado = true; }
 else if (ipasgoMode === "especial") { ipasgoValor = round2(subsidio * 0.1248);
-  if (ipasgoValor >= 1025.40) { ipasgoValor = 1025.40; } ipasgoSelecionado = true; }
+  if (ipasgoValor > 1247.93) { ipasgoValor = 1247.93; } ipasgoSelecionado = true; }
 else if (ipasgoMode === "manual") { ipasgoValor = round2(parseMoney(valorIpasgoInput ? valorIpasgoInput.value : "0")); ipasgoSelecionado = ipasgoValor > 0; }
 
   const associacaoValor = parseMoney(byId("associacaoValor").value);
